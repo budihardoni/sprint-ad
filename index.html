@@ -13,6 +13,8 @@
             --border-color: #dadce0;
             --text-color: #202124;
             --bg-color: #f8f9fa;
+            --resizer-bg: #e0e0e0;
+            --resizer-hover: #1a73e8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,25 +24,71 @@
             background: #ffffff;
             height: 100vh;
             color: var(--text-color);
-            overflow: hidden;
+            overflow: hidden; /* Prevent body scroll, handle inside panels */
         }
 
+        /* FLEX CONTAINER (Gantikan Grid) */
         .container {
-            display: grid;
-            grid-template-columns: 450px 1fr;
+            display: flex;
+            flex-direction: row; /* Default: Side by Side */
             height: 100vh;
-            max-width: 100%;
+            width: 100%;
+            overflow: hidden;
         }
 
         /* --- LEFT SECTION (INPUTS) --- */
         .input-section {
+            width: 450px; /* Default width */
+            min-width: 300px; /* Batas minimum */
+            max-width: 70%; /* Batas maksimum */
             padding: 32px;
             overflow-y: auto;
-            height: 100vh;
-            border-right: 1px solid var(--border-color);
             background: #fff;
+            height: 100%;
         }
 
+        /* --- RESIZER HANDLE --- */
+        .resizer {
+            background-color: var(--bg-color);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            cursor: col-resize; /* Cursor geser kiri-kanan */
+            width: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+
+        .resizer:hover, .resizer.resizing {
+            background-color: var(--resizer-bg);
+            border-color: var(--resizer-hover);
+        }
+
+        /* Grip Icon Visual */
+        .resizer::after {
+            content: "||";
+            color: #9aa0a6;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            pointer-events: none; /* Agar klik tembus ke div */
+        }
+
+        /* --- RIGHT SECTION (OUTPUT) --- */
+        .output-section {
+            flex: 1; /* Mengisi sisa ruang */
+            min-width: 300px;
+            padding: 40px;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        /* --- TYPOGRAPHY & FORM STYLES --- */
         h2 { 
             margin-bottom: 24px; 
             font-size: 20px; 
@@ -135,16 +183,6 @@
             border-left: 3px solid var(--primary-color) !important;
         }
 
-        /* --- RIGHT SECTION (OUTPUT) --- */
-        .output-section {
-            padding: 40px;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow-y: auto;
-        }
-
         .output-paper {
             background: #ffffff;
             border: 1px solid var(--border-color);
@@ -152,7 +190,7 @@
             padding: 50px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             margin-bottom: 20px;
-            min-height: 600px;
+            min-height: 600px; /* Kertas output panjang */
         }
 
         .output-content {
@@ -197,17 +235,49 @@
         .copy-btn:active { transform: scale(0.98); }
         .copy-btn.copied { background: #188038; }
 
+        /* --- RESPONSIVE / MOBILE STYLE --- */
         @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-            .input-section { height: auto; border-right: none; border-bottom: 1px solid var(--border-color); }
-            .output-section { height: auto; }
+            .container {
+                flex-direction: column; /* Stack Atas-Bawah */
+            }
+
+            .input-section {
+                width: 100%;
+                max-width: 100%;
+                height: 50%; /* Default mobile height */
+                min-height: 200px;
+                max-height: 80%;
+                border-right: none;
+            }
+
+            .resizer {
+                width: 100%;
+                height: 12px; /* Lebih tebal di HP biar gampang disentuh */
+                cursor: row-resize; /* Cursor geser atas-bawah */
+                border-left: none;
+                border-right: none;
+                border-top: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .resizer::after {
+                content: "="; /* Ubah icon jadi horizontal grip */
+                transform: rotate(90deg);
+                font-size: 14px;
+            }
+
+            .output-section {
+                width: 100%;
+                height: auto;
+                min-height: 200px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="container">
         <!-- INPUT SECTION -->
-        <div class="input-section">
+        <div class="input-section" id="leftPane">
             <h2>✏️</h2>
 
             <!-- 1. TOPIC -->
@@ -393,8 +463,11 @@
             </div>
         </div>
 
+        <!-- RESIZER HANDLE -->
+        <div class="resizer" id="resizer"></div>
+
         <!-- OUTPUT SECTION -->
-        <div class="output-section">
+        <div class="output-section" id="rightPane">
             <div class="output-paper" id="outputContent">
                 <!-- Content injected via JS -->
             </div>
@@ -406,7 +479,71 @@
     </div>
 
     <script>
-        // --- SMART LOGIC MAPS (UPDATED WITH NEW FORMULAS) ---
+        // --- DRAG RESIZE LOGIC ---
+        const resizer = document.getElementById('resizer');
+        const leftPane = document.getElementById('leftPane');
+        const container = document.getElementById('container');
+        
+        let x = 0;
+        let y = 0;
+        let leftWidth = 0;
+        let leftHeight = 0;
+
+        const mouseDownHandler = function(e) {
+            // Get current mouse position
+            x = e.clientX;
+            y = e.clientY;
+            
+            // Calculate current dimension of leftPane
+            const rect = leftPane.getBoundingClientRect();
+            leftWidth = rect.width;
+            leftHeight = rect.height;
+
+            resizer.classList.add('resizing');
+
+            // Attach listeners to document
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
+        };
+
+        const mouseMoveHandler = function(e) {
+            // Check current window width to determine direction
+            const isMobile = window.innerWidth <= 900;
+
+            if (!isMobile) {
+                // Desktop: Horizontal Resize
+                const dx = e.clientX - x;
+                const newWidth = leftWidth + dx;
+                
+                // Prevent panel from getting too small or too big
+                if (newWidth > 300 && newWidth < window.innerWidth * 0.7) {
+                    leftPane.style.width = `${newWidth}px`;
+                    leftPane.style.flex = `0 0 ${newWidth}px`; // Force flex basis
+                }
+            } else {
+                // Mobile: Vertical Resize
+                const dy = e.clientY - y;
+                const newHeight = leftHeight + dy;
+
+                if (newHeight > 200 && newHeight < window.innerHeight * 0.8) {
+                    leftPane.style.height = `${newHeight}px`;
+                    leftPane.style.flex = 'none'; // Disable flex grow/shrink for custom height
+                }
+            }
+        };
+
+        const mouseUpHandler = function() {
+            resizer.classList.remove('resizing');
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+        };
+
+        // Attach event listener to resizer
+        resizer.addEventListener('mousedown', mouseDownHandler);
+        // End Drag Logic
+
+
+        // --- SMART LOGIC MAPS ---
         const arcDefaults = {
             // Original
             'WOW–HOW–NOW': 'INSIGHT',
@@ -416,7 +553,7 @@
             'Top-X Curiosity Loop': 'CURIOSITY LOOP',
             
             // New & Updated
-            'RANT / OPINION': 'COURAGE', // Standing for an opinion often fits Courage or Connection
+            'RANT / OPINION': 'COURAGE',
             'Twist–Reveal–Reflect': 'MYSTERY ARC',
             'Question–Chase–Answer': 'CURIOSITY LOOP',
             'Mystery–Clue–Truth': 'MYSTERY ARC',
@@ -426,26 +563,24 @@
             'Vision–Obstacle–Breakthrough': 'COURAGE',
             'Chaos–Order–Purpose': 'INSIGHT',
             'Fear–Avoid–Achieve': 'COURAGE',
-            'Pattern–Break–Impact': 'ABSURDITY', // or Insight
+            'Pattern–Break–Impact': 'ABSURDITY',
             'OneName–OneIdea–OneChange': 'LEGACY',
             'TinyDetail–BigTruth–Curiosity': 'CURIOSITY LOOP',
             'HiddenOrigin–ModernImpact–HumanMeaning': 'LEGACY'
         };
 
         function getAutoRetention(durationVal, formulaVal) {
-            // 1. Formula Overrides (Priority)
-            if (formulaVal === 'RANT / OPINION') return 'Hard CTA Minimal Outro'; // Usually asks for comments
+            if (formulaVal === 'RANT / OPINION') return 'Hard CTA Minimal Outro';
             if (formulaVal.includes('Mystery') || formulaVal.includes('Twist') || formulaVal.includes('TinyDetail')) return 'Curiosity Cliffhanger';
             if (formulaVal.includes('Myth') || formulaVal.includes('Proof') || formulaVal.includes('Vision')) return 'Reward Forecasting';
             if (formulaVal.includes('Fact–Emotion') || formulaVal.includes('OneName')) return 'Emotional Payoff Cascade';
             
-            // 2. Duration Buckets (Fallback)
             if (['15s', '30s'].includes(durationVal)) return 'Click-Feedback + Pattern Interrupt';
             if (['1m', '90s'].includes(durationVal)) return 'Curiosity Loop + Sequential Reveal';
             if (['3m', '5m'].includes(durationVal)) return 'Sequential Reveal + Promise Breadcrumbs';
             if (['8m', '10m', '15m+'].includes(durationVal)) return 'Emotional Payoff Cascade + End-Loaded';
 
-            return 'Curiosity Loop'; // Generic Fallback
+            return 'Curiosity Loop';
         }
 
         // --- DOM Elements ---
@@ -467,8 +602,6 @@
         const copyBtn = document.getElementById('copyBtn');
 
         // --- EVENT LISTENERS ---
-
-        // Duration Custom Toggle
         inputs.duration.addEventListener('change', () => {
             if (inputs.duration.value === 'Custom') {
                 inputs.durationCustom.style.display = 'block';
@@ -479,7 +612,6 @@
             generateOutput();
         });
 
-        // Audience Preset Logic
         inputs.audiencePreset.addEventListener('change', () => {
             const val = inputs.audiencePreset.value;
             if (val && val !== 'Custom') {
@@ -491,14 +623,12 @@
             generateOutput();
         });
 
-        // Add listeners to all
         Object.values(inputs).forEach(el => {
             el.addEventListener('input', generateOutput);
             el.addEventListener('change', generateOutput);
         });
 
         // --- HELPER FUNCTIONS ---
-
         function getMultiSelectValues(selectElement, customInputElement = null) {
             let selected = Array.from(selectElement.selectedOptions).map(opt => opt.value);
             if (customInputElement && customInputElement.value.trim() !== '') {
@@ -509,85 +639,61 @@
         }
 
         function generateOutput() {
-            // 1. Topic
             const topic = inputs.topic.value.trim() || '...';
-
-            // 2. Durasi
             let durasi = inputs.duration.value;
             if (durasi === 'Custom') durasi = inputs.durationCustom.value.trim() || 'Custom';
-
-            // 3. Bahasa
             const bahasa = inputs.language.value;
-
-            // 4. Audience
             const audience = inputs.audienceCustom.value.trim() || '...';
-
-            // 5. Voice
             const voice = getMultiSelectValues(inputs.voiceBase, inputs.voiceCustom);
-
-            // 6. Tone
             const tone = getMultiSelectValues(inputs.toneFlavor);
-
-            // 7. Formula
             const formula = inputs.storyFormula.value;
 
-            // 8. Arc (Smart Logic)
             let arc = inputs.emotionalArc.value;
             if (arc === 'AUTO') {
                 const derived = arcDefaults[formula] || '3-ACT';
                 arc = `${derived} (Auto-Derived)`;
             }
 
-            // 9. Retention (Smart Logic)
             let retention = inputs.retention.value;
             if (retention === 'AUTO') {
                 const derived = getAutoRetention(durasi, formula);
                 retention = `${derived} (Auto-Selected)`;
             }
 
-            // Output HTML
             const htmlContent = `
                 <div class="output-content">
                     <div class="output-row">
                         <span class="output-label">1. Topic:</span>
                         <span class="output-value">${topic}</span>
                     </div>
-                    
                     <div class="output-row">
                         <span class="output-label">2. Durasi:</span>
                         <span class="output-value">${durasi}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">3. Bahasa:</span>
                         <span class="output-value">${bahasa}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">4. Target Audience:</span>
                         <span class="output-value">${audience}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">5. Voice Base:</span>
                         <span class="output-value">${voice}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">6. Tone Flavor:</span>
                         <span class="output-value">${tone}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">7. Story Formula:</span>
                         <span class="output-value">${formula}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">8. Emotional Arc:</span>
                         <span class="output-value">${arc}</span>
                     </div>
-
                     <div class="output-row">
                         <span class="output-label">9. Retention:</span>
                         <span class="output-value">${retention}</span>
@@ -598,15 +704,11 @@
         }
 
         function copyToClipboard() {
-            // Re-calculate Logic for Plain Text Copy
             let durasi = inputs.duration.value;
             if (durasi === 'Custom') durasi = inputs.durationCustom.value;
-            
             const formula = inputs.storyFormula.value;
-            
             let arc = inputs.emotionalArc.value;
             if (arc === 'AUTO') arc = (arcDefaults[formula] || '3-ACT') + ' (Auto-Derived)';
-            
             let retention = inputs.retention.value;
             if (retention === 'AUTO') retention = getAutoRetention(durasi, formula) + ' (Auto-Selected)';
 
