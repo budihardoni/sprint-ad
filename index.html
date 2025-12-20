@@ -295,7 +295,7 @@
                 <label>7. Duration</label>
                 <select id="duration">
                     <option value="15s">15s (Story / Micro Ad)</option>
-                    <option value="60s">60s (TikTok / Reels / Shorts)</option>
+                    <option value="30s">30s (TikTok / Reels / Shorts)</option>
                     <option value="1m" selected>1m (Standard Social Ad)</option>
                     <option value="90s">90s (In-depth Promo)</option>
                     <option value="3m">3m (Brand Film / YouTube)</option>
@@ -421,7 +421,7 @@
 
             let rawDur = getS(inputs.duration, inputs.durationCustom);
             let ratio = '';
-            if(['15s', '60s', '1m', '90s'].includes(rawDur)) ratio = ' (9:16)';
+            if(['15s', '30s', '1m', '90s'].includes(rawDur)) ratio = ' (9:16)';
             else if(['3m', '5m', '8m', '10m', '15m+'].includes(rawDur)) ratio = ' (16:9)';
             const durationVal = rawDur + ratio;
 
