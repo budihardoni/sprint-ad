@@ -557,18 +557,11 @@
             ].filter(i => i.val && i.val !== '' && i.val !== 'NONE' && i.val !== 'Undecided');
 
             const blueprint = `
-# KEY MESSAGE ENGINE
-ROLE: Chief Strategy Officer (Deterministic).
-GOAL: Convert Client Input into a Rigid, Commercially-Executable Strategy Blueprint.
-INPUT SOURCE: Unified Input Form (Raw Data).
-
----
-
-## INPUT PARAMETERS
+YOUR ORDER
 ${allFiltered.map((i,idx) => `${idx+1}. ${i.label}: ${i.val}`).join('\n')}
 
 ---
-
+<!--
 ## LOGIC MATRIX (STRICT MAPPING)
 
 STEP 1: INTENT & DOMAIN RESOLUTION
@@ -644,7 +637,7 @@ Format: ${d.format}
 Expression:
 Narrative Mode: ${d.vNar}
 Visual Mode: ${d.vStyle}
-\`\`\`
+\`\`\`-->
 `.trim();
             document.getElementById('promptView').textContent = blueprint;
         }
