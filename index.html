@@ -1,695 +1,531 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📝 Brief</title>
+    <title>SPRINT - Google Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1a73e8;
-            --border-color: #dadce0;
-            --bg-color: #f8f9fa;
-            --code-bg: #1e1e1e;
-            --code-text: #d4d4d4;
-            --text-color: #202124;
-            --radius-input: 12px;
-            --radius-container: 16px;
-            --radius-btn: 50px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Google Sans', sans-serif;
-            height: 100vh;
-            color: var(--text-color);
-            overflow: hidden;
-            background: #fff;
-        }
-
-        .container { display: flex; height: 100vh; width: 100%; }
-
-        .input-section {
-            width: 480px;
-            min-width: 350px;
-            padding: 32px;
-            overflow-y: auto;
-            background: #fff;
-            border-right: 1px solid var(--border-color);
-        }
-
-        .resizer {
-            width: 8px;
-            cursor: col-resize;
-            background: #f1f3f4;
-            transition: background 0.2s;
-            border-left: 1px solid #ebebeb;
-        }
-        .resizer:hover { background: var(--primary-color); }
-
-        .output-section {
-            flex: 1;
-            padding: 32px;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        h2 { color: var(--text-color); font-size: 18px; margin-bottom: 20px; font-weight: 700; }
-        
-        .section-title { 
-            font-size: 11px; font-weight: 800; color: #5f6368; 
-            text-transform: uppercase; border-bottom: 2px solid #e8eaed; 
-            padding-bottom: 5px; margin: 30px 0 15px; letter-spacing: 0.5px; 
-        }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 8px; color: #202124; }
-        .helper { font-size: 11px; color: #666; margin-bottom: 6px; display: block; line-height: 1.4; }
-        
-        input[type="text"], select, textarea {
-            width: 100%; padding: 12px 16px; 
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-input);
-            font-family: inherit; font-size: 13px;
-            background: #fff;
-            color: #3c4043;
-            transition: border 0.2s, box-shadow 0.2s;
-        }
-
-        textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23202124%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px top 50%;
-            background-size: 10px auto;
-        }
-
-        input:focus, select:focus, textarea:focus { 
-            outline: none; 
-            border-color: var(--primary-color); 
-            box-shadow: 0 0 0 4px rgba(26,115,232,0.1); 
-        }
-        
-        .custom-input { margin-top: 10px; display: block; background: #fff; border-left: 1px solid var(--border-color) !important; }
-
-        .file-wrapper { display: flex; align-items: center; gap: 8px; width: 100%; }
-        input[type="file"] { font-size: 12px; padding: 8px; background: #f8f9fa; border: 1px dashed var(--border-color); border-radius: var(--radius-input); flex: 1; }
-        .clear-btn { background: transparent; border: none; color: #202124; font-weight: 700; font-size: 16px; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 0 8px; transition: 0.2s; }
-        .clear-btn.visible { display: flex; }
-
-        .view-toggle { display: flex; background: #e8eaed; padding: 4px; border-radius: var(--radius-btn); margin-bottom: 15px; width: fit-content; margin-left: auto; }
-        .view-btn { padding: 8px 20px; border: none; background: transparent; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: var(--radius-btn); color: #5f6368; transition: 0.2s; }
-        .view-btn.active { background: #fff; color: var(--text-color); box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
-
-        .output-box { flex: 1; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-container); overflow: hidden; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
-        .brief-content { padding: 30px; line-height: 1.4; font-size: 14px; overflow-y: auto; height: 100%; }
-        .brief-item { display: flex; border-bottom: 1px solid #f1f3f4; padding: 12px 0; align-items: flex-start; justify-content: flex-start; }
-        .brief-key { font-weight: 700; width: 180px; color: #444; flex-shrink: 0; padding-right: 10px; line-height: 1.5; }
-        .brief-val { color: #202124; font-weight: 500; flex: 1; text-align: left !important; white-space: pre-wrap; line-height: 1.5; }
-        .detail-block { display: block; margin-top: 4px; color: #5f6368; font-size: 13px; line-height: 1.5; text-align: left !important; }
-
-        .prompt-content { background: var(--code-bg); color: var(--code-text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 25px; white-space: pre-wrap; line-height: 1.5; height: 100%; overflow-y: auto; display: none; }
-        .action-bar { margin-top: 15px; display: flex; justify-content: flex-start; }
-        .btn { padding: 12px 28px; border: none; border-radius: var(--radius-btn); font-weight: 600; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-primary { background: #202124; color: #fff; } 
-        .btn-primary:hover { background: #3c4043; transform: translateY(-1px); }
-        .btn.copied { background: #1a73e8 !important; color: #fff; }
-
-        /* Custom Checkbox/Radio Styles */
-        .option-group { margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 8px; }
-        .option-label { font-size: 12px; font-weight: 700; color: #5f6368; margin-bottom: 8px; display: block; }
-        .check-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; color: #3c4043; }
-        .check-item input { width: auto; margin: 0; cursor: pointer; }
-
-        @media (max-width: 800px) {
-            .container { flex-direction: column; }
-            .input-section, .output-section { width: 100%; height: 50%; }
-            .resizer { display: none; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- LEFT INPUT -->
-        <div class="input-section" id="leftPane">
-            <h2>📝 Campaign Brief</h2>
-
-            <div class="section-title" style="margin-top:0">A. Brand & Campaign Context</div>
-            <div class="form-group">
-                <label>1. Brand Name</label>
-                <input type="text" id="brandName" placeholder="Contoh: Makaroni Ngehe, Maternal, atau Brand Kamu...">
-            </div>
-
-            <div class="form-group">
-                <label>2. Industry Category</label>
-                <select id="industry">
-                    <option value="">-- Select Industry --</option>
-                    <optgroup label="Food, Beverage & Lifestyle">
-                        <option value="Snack / Packaged Food">Snack / Packaged Food: Cemilan, makanan ringan, produk kemasan.</option>
-                        <option value="Beverage / Drink">Beverage / Drink: Minuman kemasan, kopi botolan, teh, minuman kekinian.</option>
-                        <option value="Dine-in / Restaurant">Dine-in / Restaurant: Rumah makan, warung, restoran, kafe makan.</option>
-                        <option value="Coffee & Café (F&B Lifestyle)">Coffee & Café (F&B Lifestyle): Coffee shop, brand kopi, lifestyle F&B berbasis pengalaman.</option>
-                    </optgroup>
-                    <optgroup label="Consumer Goods & Personal Care">
-                        <option value="Household Products">Household Products: Sabun, deterjen, pembersih, tisu, kebutuhan rumah tangga.</option>
-                        <option value="Beauty & Skincare">Beauty & Skincare: Skincare, kosmetik, body care, hair care, personal care.</option>
-                        <option value="Fashion & Apparel">Fashion & Apparel: Pakaian, sepatu, aksesoris, brand lokal, retail.</option>
-                    </optgroup>
-                    <optgroup label="Digital & Platform Services">
-                        <option value="E-Commerce & Online Retail">E-Commerce & Online Retail: Marketplace, toko online, brand berbasis platform digital.</option>
-                        <option value="Logistics & Delivery Service">Logistics & Delivery Service: Jasa pengiriman, ekspedisi, last-mile delivery.</option>
-                        <option value="Software & SaaS (Digital Product)">Software & SaaS (Digital Product): Aplikasi, software berlangganan, platform B2B/B2C.</option>
-                        <option value="Fintech (Consumer Finance)">Fintech (Consumer Finance): Dompet digital, paylater, pinjaman, aplikasi keuangan.</option>
-                    </optgroup>
-                    <optgroup label="Experience & Service">
-                        <option value="Travel & Hospitality">Travel & Hospitality: Hotel, villa, travel agent, wisata, penginapan.</option>
-                        <option value="Event, Concert & Entertainment">Event, Concert & Entertainment: Konser, event organizer, hiburan, festival.</option>
-                        <option value="Wedding Services">Wedding Services: WO, dekorasi, venue, catering, dokumentasi pernikahan.</option>
-                    </optgroup>
-                    <optgroup label="Automotive & Mobility">
-                        <option value="Automotive">Automotive: Mobil, motor, bengkel, aksesoris, layanan otomotif.</option>
-                    </optgroup>
-                    <optgroup label="Property, Industrial & Energy">
-                        <option value="Real Estate & Property">Real Estate & Property: Rumah, apartemen, kos, properti komersial.</option>
-                        <option value="Construction & Engineering">Construction & Engineering: Kontraktor, jasa bangun, engineering, proyek infrastruktur.</option>
-                        <option value="Manufacturing & Industrial Product">Manufacturing & Industrial Product: Produk pabrik, mesin, alat industri, B2B manufacturing.</option>
-                        <option value="Energy & Renewable Utility">Energy & Renewable Utility: Energi, listrik, solar panel, energi terbarukan.</option>
-                    </optgroup>
-                    <optgroup label="Professional & Institutional">
-                        <option value="Healthcare & Pharmaceutical">Healthcare & Pharmaceutical: Klinik, rumah sakit, obat, suplemen, layanan kesehatan.</option>
-                        <option value="Education & Training">Education & Training: Sekolah, kampus, kursus, lembaga pendidikan.</option>
-                        <option value="Insurance">Insurance: Asuransi jiwa, kesehatan, kendaraan, proteksi finansial.</option>
-                        <option value="Legal Services">Legal Services: Firma hukum, notaris, jasa legal & konsultasi hukum.</option>
-                    </optgroup>
-                    <optgroup label="Creative & Production Support">
-                        <option value="Design Services">Design Services: Jasa desain grafis, branding, logo, materi promosi.</option>
-                        <option value="Printing Services">Printing Services: Percetakan digital, banner, brosur, kemasan, merchandise.</option>
-                    </optgroup>
-                    <option value="Custom">Other Category</option>
-                </select>
-                <input type="text" id="industryCustom" class="custom-input" style="display:none" placeholder="Type industry manually...">
-            </div>
-
-            <div class="form-group">
-                <label>3. Product Name</label>
-                <input type="text" id="productName" placeholder="e.g. Kopi Kenangan Mantan">
-                <textarea id="productDesc" style="margin-top: 15px;" placeholder="Apa keunggulannya? Apa bedanya dengan kompetitor? Berapa harganya?"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>4. Campaign Template</label>
-                <select id="campaignTemplate">
-                    <option value="NONE">None (Build from scratch)</option>
-                    <option value="Product Launch">Product Launch (New Market Entry)</option>
-                    <option value="Testimonial">Testimonial (Social Proof & Trust)</option>
-                    <option value="Demo">Product Demo (Feature Showcase)</option>
-                    <option value="Brand Story">Brand Story (Mission & Values)</option>
-                    <option value="Product Awarness">Awareness (Reach & Visibility)</option>
-                    <option value="Social Impact">Social Impact (Community & CSR)</option>
-                    <option value="Comparison">Comparison (Market Superiority)</option>
-                    <option value="Seasonal Promo">Seasonal / Holiday Promo</option>
-                    <option value="Flash Sale">Flash Sale / Limited Offer</option>
-                    <option value="Custom">Custom Campaign...</option>
-                </select>
-                <input type="text" id="campaignCustom" class="custom-input" style="display:none" placeholder="Type campaign name manual...">
-            </div>
-
-            <div class="section-title">B. Content Strategy</div>
-            <div class="form-group">
-                <label>5. Key Message / Angel Iklan</label>
-                <textarea id="topic" placeholder="Contoh: Kopi ini bikin melek tanpa bikin kembung (bukan sekadar 'Kopi enak')"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>6. Content Format</label>
-                <select id="format">
-                    <option value="Undecided">⚠️ Belum kepikiran (Skip Output)</option>
-                    
-                    <optgroup label="Universal Commercial Styles">
-                        <option value="UGC (User Generated Content)">UGC Style (Creator-led)</option>
-                        <option value="TVC (Television Commercial)">TVC Style (Premium Narrative)</option>
-                        <option value="Cinematic Brand Film">Cinematic Brand Story</option>
-                        <option value="Direct Response / Hard Sell">Hard Sell (Promotion Focus)</option>
-                    </optgroup>
-                
-                    <optgroup label="F&B / FMCG (Food & Consumer Goods)">
-                        <option value="Tabletop / Macro Food Shots">Tabletop (Macro Food Shots)</option>
-                        <option value="Cooking / Preparation Tutorial">Cooking & Recipe Tutorial</option>
-                        <option value="Mukbang / Taste Test">Mukbang / Genuine Reaction</option>
-                    </optgroup>
-                
-                    <optgroup label="Beauty, Fashion & Lifestyle">
-                        <option value="GRWM (Get Ready With Me)">GRWM / Routine Style</option>
-                        <option value="Fashion Lookbook / Runway">Fashion Lookbook / Aesthetic Walk</option>
-                        <option value="Product Apply / Texture Shot">Skin-Test / Texture Closeup</option>
-                    </optgroup>
-                
-                    <optgroup label="Tech, SaaS & Professional">
-                        <option value="App / Interface Walkthrough">App/Web Interface Walkthrough</option>
-                        <option value="Screencast Explainer">Screencast / Dashboard Demo</option>
-                        <option value="Whiteboard / Isometric Animation">Whiteboard / Isometric Animation</option>
-                    </optgroup>
-                
-                    <optgroup label="Automotive & Real Estate">
-                        <option value="POV Driving / Walkthrough">POV Driving / Property Walkthrough</option>
-                        <option value="Exterior / Interior Cinematic">Exterior / Interior Cinematic Tour</option>
-                        <option value="Virtual Tour Guide">Host-Led Virtual Tour</option>
-                    </optgroup>
-                
-                    <optgroup label="Performance & Retail">
-                        <option value="Comparison Ad (Side-by-Side)">Comparison (Side-by-Side)</option>
-                        <option value="Unboxing & First Impression">Unboxing & First Impression</option>
-                        <option value="Testimonial Montage">Testimonial Montage (Social Proof)</option>
-                        <option value="Street Interview (Vox Pop)">Vox Pop / Street Interview</option>
-                    </optgroup>
-                
-                    <optgroup label="Others">
-                        <option value="3D Product Reveal / CGI">3D Product Reveal / CGI</option>
-                        <option value="Audio / Radio Ad">Audio Only (Radio/Spotify Ad)</option>
-                        <option value="Custom">Custom Format Ad...</option>
-                    </optgroup>
-                </select>
-                <input type="text" id="formatCustom" class="custom-input" style="display:none" placeholder="Type format manually...">
-                
-                <div class="option-group">
-                    <span class="option-label">Gaya Visual (Vibe):</span>
-                    <label class="check-item"><input type="checkbox" name="visualMode" value="Literal"> NATURAL 
-                    (Dokumenter, Vlog, Keseharian, Apa adanya)</label>
-                    <label class="check-item"><input type="checkbox" name="visualMode" value="Exaggerated"> DRAMATIS (Visual "wah", iklan TV, Intens)</label>
-                    <label class="check-item"><input type="checkbox" name="visualMode" value="Absurd"> FANTASI (Imajinatif, Mustahil, Surealis, Efek magis)</label>
-                </div>
-
-                <div class="option-group">
-                    <span class="option-label">Gaya Bicara (Voice):</span>
-                    <label class="check-item"><input type="checkbox" name="narrativeMode" value="Literal"> JELAS
-                    (Lugas, Informatif, Serius)</label>
-                    <label class="check-item"><input type="checkbox" name="narrativeMode" value="Exaggerated"> SANTAI (Fun, Ringan, Bercanda, Bahasa teman)</label>
-                    <label class="check-item"><input type="checkbox" name="narrativeMode" value="Absurd"> NYELENEH 
-                    (Aneh, Lucu, Unik)</label>
-                </div>
-
-                <div class="option-group">
-                    <span class="option-label">Larangan visual (Optional):</span>
-                    <label class="check-item"><input type="checkbox" name="visualBan" value="Wajah 'AI' / Terlalu Sempurna (Plastik)"> Wajah terlalu cantik / Model</label>
-                    <label class="check-item"><input type="checkbox" name="visualBan" value="Terlalu sinematik"> Terlalu Sinematik</label>
-                    <label class="check-item"><input type="checkbox" name="visualBan" value="Terlalu kartun"> Terlalu Kartun</label>
-                    <input type="text" id="visualBanCustom" placeholder="e.g. 'Jangan ada warna merah'">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>7. Duration</label>
-                <select id="duration">
-                    <option value="8s" selected>8s (Status Whatsapp)</option>
-                    <option value="15s" selected>15s (Story / Micro Ad)</option>
-                    <option value="30s">30s (TikTok / Reels / Shorts)</option>
-                    <option value="1m">1m (Standard Social Ad)</option>
-                    <option value="90s">90s (In-depth Promo)</option>
-            <!--        <option value="3m">3m (Brand Film / YouTube)</option>
-                    <option value="5m">5m (Product Deep Dive)</option>
-                    <option value="8m">8m (YouTube Standard)</option>
-                    <option value="10m">10m (Deep Narrative)</option>
-                    <option value="15m+">15m+ (Documentary Style)</option>-->
-                    <option value="Custom">Custom Duration...</option>
-                </select>
-                <input type="text" id="durationCustom" class="custom-input" style="display:none" placeholder="Isi durasi manual...">
-                <div class="option-group">
-                    <label class="check-item"><input type="radio" name="aspectRatio" value="Vertical"> Vertical (9:16)</label>
-                    <label class="check-item"><input type="radio" name="aspectRatio" value="Horizontal"> Horizontal (16:9)</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>8. Target Audience (Consumer Profile)</label>
-                <select id="audiencePreset">
-                    <option value="">-- Pilih Profil Konsumen --</option>
-                    <option value="Impulse Buyers (Pengejar diskon & promo instan)">Impulse Buyers (Promo Hunter)</option>
-                    <option value="High-End Seekers (Mencari kualitas & status sosial)">High-End Seekers (Luxury/Quality)</option>
-                    <option value="Solution Seekers (Orang dengan masalah spesifik)">Solution Seekers (Butuh Solusi)</option>
-                    <option value="Gen Z / Youth (Trend-conscious & internet native)">Gen Z / Youth (Visual-driven)</option>
-                    <option value="Busy Professionals (Mencari efisiensi & waktu)">Busy Professionals (Efficiency)</option>
-                    <option value="Skeptical Researchers (Butuh bukti data & review)">Skeptical Researchers (Data-driven)</option>
-                    <option value="Ibu Rumah Tangga (Penentu belanja keluarga)">Ibu Rumah Tangga (Family Focus)</option>
-                    <option value="Small Biz Owners/UMKM (Mencari pertumbuhan bisnis)">Small Biz Owners / UMKM</option>
-                    <option value="Custom">Custom Audience...</option>
-                </select>
-                <input type="text" id="audienceCustom" class="custom-input" style="display:none" placeholder="Type audience manually...">
-            </div>
-
-            <div class="form-group">
-                <label>9. Call to Action (CTA)</label>
-                <input type="text" id="cta" placeholder="e.g. 'Klik link di bio', 'Beli sekarang'...">
-            </div>
-
-            <div class="form-group">
-                <label>10. Language</label>
-                <select id="language">
-                    <option value="Indonesia" selected>Indonesia</option>
-                    <option value="English">English</option>
-                    <option value="Mix (Indo-Eng)">Mix (Indo-Eng)</option>
-                </select>
-            </div>
-
-            <div class="section-title">C. Asset & Policy</div>
-            
-            <div class="form-group">
-                <label>11. Asset Upload (Optional)</label>
-                <div style="margin-top:10px">
-                    <label style="font-size:12px; font-weight:500">Product Photo:</label>
-                    <div class="file-wrapper">
-                        <input type="file" id="productPhoto">
-                        <button type="button" class="clear-btn" id="clearProd">✕</button>
-                    </div>
-                </div>
-                <div style="margin-top:10px">
-                    <label style="font-size:12px; font-weight:500">Talent/Model Photo:</label>
-                    <div class="file-wrapper">
-                        <input type="file" id="talentPhoto">
-                        <button type="button" class="clear-btn" id="clearTalent">✕</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>12. Brand Guidelines / Aturan Wajib (Optional)</label>
-                <textarea id="mandatories" placeholder="e.g. Logo kanan bawah, sebutkan tagline..."></textarea>
-            </div>
-
-        </div>
-
-        <div class="resizer" id="resizer"></div>
-
-        <!-- RIGHT OUTPUT -->
-        <div class="output-section">
-            <div class="view-toggle">
-                <button class="view-btn active" onclick="switchView('brief')">Preview</button>
-                <button class="view-btn" onclick="switchView('prompt')">Check out</button>
-            </div>
-
-            <div class="output-box">
-                <div id="briefView" class="brief-content"></div>
-                <div id="promptView" class="prompt-content"></div>
-            </div>
-
-            <div class="action-bar">
-                <button class="btn btn-primary" id="smartCopyBtn" onclick="smartCopy()">
-                    <span>Order</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <!-- FontAwesome for Social Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="crossorigin="anonymous">
 
     <script>
-        const inputs = {
-            brandName: document.getElementById('brandName'),
-            industry: document.getElementById('industry'), industryCustom: document.getElementById('industryCustom'),
-            productName: document.getElementById('productName'), productDesc: document.getElementById('productDesc'),
-            campaignTemplate: document.getElementById('campaignTemplate'), campaignCustom: document.getElementById('campaignCustom'),
-            topic: document.getElementById('topic'), 
-            format: document.getElementById('format'), formatCustom: document.getElementById('formatCustom'),
-            duration: document.getElementById('duration'), durationCustom: document.getElementById('durationCustom'),
-            audiencePreset: document.getElementById('audiencePreset'), audienceCustom: document.getElementById('audienceCustom'),
-            cta: document.getElementById('cta'), language: document.getElementById('language'),
-            mandatories: document.getElementById('mandatories'),
-            productPhoto: document.getElementById('productPhoto'),
-            talentPhoto: document.getElementById('talentPhoto'),
-            visualBanCustom: document.getElementById('visualBanCustom')
-        };
-
-        function getData() {
-            const getS = (sel, cust) => (sel.value === 'Custom' && cust) ? (cust.value || '') : sel.value;
-            
-            // Radio: Visual Style
-            const vStyleEl = document.querySelector('input[name="visualMode"]:checked');
-            const vStyle = vStyleEl ? vStyleEl.value : '';
-
-            // Radio: Narrative Style
-            const nStyleEl = document.querySelector('input[name="narrativeMode"]:checked');
-            const nStyle = nStyleEl ? nStyleEl.value : '';
-
-            // Checkbox: Visual Ban
-            const vBanEls = document.querySelectorAll('input[name="visualBan"]:checked');
-            let vBanList = Array.from(vBanEls).map(cb => cb.value);
-            
-            // Add Custom Visual Ban if exists
-            if (inputs.visualBanCustom.value) {
-                vBanList.push(inputs.visualBanCustom.value);
-            }
-            const vBan = vBanList.join(', ');
-
-            const brandVal = inputs.brandName.value || 'Brand';
-            const audienceVal = getS(inputs.audiencePreset, inputs.audienceCustom) || 'General Audience';
-            const langVal = inputs.language.value || 'Indonesia';
-
-            let rawDur = getS(inputs.duration, inputs.durationCustom);
-            let ratio = '';
-            
-            const ratioEl = document.querySelector('input[name="aspectRatio"]:checked');
-            if (ratioEl && ratioEl.value === 'Vertical') ratio = ' (9:16)';
-            else if (ratioEl && ratioEl.value === 'Horizontal') ratio = ' (16:9)';
-
-            const durationVal = rawDur + ratio;
-
-            let assetProd = inputs.productPhoto.files.length > 0 ? '[Prod1]' : 'No';
-            let assetTalent = inputs.talentPhoto.files.length > 0 ? '[C1]' : 'No';
-
-            let formatVal = getS(inputs.format, inputs.formatCustom);
-            
-            // Logic: Visual/Narrative styles NOT included in formatVal (so they don't show in Preview).
-            // Logic: Bans ARE included in formatVal.
-            //if (vBan) formatVal += ` | No: ${vBan} `;
-
-            return {
-                brand: brandVal,
-                industry: getS(inputs.industry, inputs.industryCustom) || '',
-                product: inputs.productName.value || '',
-                details: inputs.productDesc.value || '',
-                campaign: getS(inputs.campaignTemplate, inputs.campaignCustom) || '',
-                angle: inputs.topic.value || '',
-                format: formatVal,
-                duration: durationVal,
-                audience: audienceVal,
-                cta: inputs.cta.value || '',
-                lang: langVal,
-                mandatories: inputs.mandatories.value,
-                assetProd: assetProd,
-                assetTalent: assetTalent,
-                vStyle: vStyle,
-                vNar: nStyle,
-                vBan: vBan
-            };
-        }
-
-        function render() {
-            const d = getData();
-            // Cek apakah user sudah mengisi apapun di luar default
-            const hasInput = (
-                inputs.brandName.value !== '' || 
-                inputs.industry.value !== '' || 
-                inputs.productName.value !== '' || 
-                inputs.productDesc.value !== '' || 
-                inputs.campaignTemplate.value !== 'NONE' || 
-                inputs.topic.value !== '' || 
-                inputs.format.value !== 'Undecided' || 
-                d.vStyle !== '' ||
-                d.vNar !== '' ||
-                d.vBan !== '' ||
-                inputs.duration.value !== '15s' || 
-                inputs.audiencePreset.value !== '' || 
-                inputs.cta.value !== '' || 
-                inputs.mandatories.value !== ''
-            );
-
-            let html = '';
-            if (!hasInput) {
-                // TAMPILAN AWAL
-                html += `<div class="brief-item"><div class="brief-key">1. Brand</div><div class="brief-val">e.g. Unilever, Bintang Toejoeh </div></div>`;
-                html += `<div class="brief-item"><div class="brief-key">2. Duration</div><div class="brief-val">15s (9:16)</div></div>`;
-                html += `<div class="brief-item"><div class="brief-key">3. Audience</div><div class="brief-val">General Audience</div></div>`;
-                html += `<div class="brief-item"><div class="brief-key">4. Language</div><div class="brief-val">Indonesia</div></div>`;
-            } else {
-                const rawItems = [
-                    { label: 'Brand', val: d.brand },
-                    { label: 'Industry Category', val: d.industry },
-                    { label: 'Product Name & USP', val: d.product, detail: d.details },
-                    { label: 'Campaign Template', val: d.campaign },
-                    { label: 'Key Message / Angel Iklan', val: d.angle },
-                    { label: 'Content Format', val: d.format },
-                    { label: 'Duration', val: d.duration },
-                    { label: 'Target Audience', val: d.audience },
-                    { label: 'Call to Action', val: d.cta },
-                    { label: 'Language', val: d.lang },
-                    { label: 'Asset Upload', val: `Product Photo: ${d.assetProd}, Talent Photo: ${d.assetTalent}` },
-                    { label: 'Brand Guidelines', val: d.mandatories }
-                ];
-
-                const filtered = rawItems.filter(i => {
-                    if(i.label === 'Brand Name' || i.label === 'Target Audience' || i.label === 'Language' || i.label === 'Duration') return true;
-                    if(i.label === 'Asset Upload' && i.val === 'Product Photo: No, Talent Photo: No') return false;
-                    return i.val && i.val !== '' && i.val !== 'NONE' && i.val !== 'Undecided';
-                });
-                
-                filtered.forEach((item, index) => {
-                    const det = item.detail ? `<div class="detail-block">${item.detail}</div>` : '';
-                    html += `<div class="brief-item"><div class="brief-key">${index + 1}. ${item.label}</div><div class="brief-val">${item.val}${det}</div></div>`;
-                });
-            }
-            document.getElementById('briefView').innerHTML = html;
-
-            const allFiltered = [
-                { label: 'Brand', val: d.brand },
-                { label: 'Industry Category', val: d.industry },
-                { label: 'Product Name', val: d.product },
-                { label: 'USP', val: d.details },
-                { label: 'Campaign Template', val: d.campaign },
-                { label: 'Key Message / Angel Iklan', val: d.angle },
-                { label: 'Content Format', val: d.format },
-                { label: 'Duration', val: d.duration },
-                { label: 'Target Audience', val: d.audience },
-                { label: 'Call to Action', val: d.cta },
-                { label: 'Language', val: d.lang },
-                { label: 'Asset Upload', val: `Product: ${d.assetProd}, Talent: ${d.assetTalent}` },
-                { label: 'Brand Mandatories', val: d.mandatories }
-            ].filter(i => i.val && i.val !== '' && i.val !== 'NONE' && i.val !== 'Undecided');
-
-            const blueprint = `
-
-BRIEF
------
-
-${allFiltered.map((i,idx) => `${idx+1}. ${i.label}: ${i.val}`).join('\n')}
-
-
-`.trim();
-            document.getElementById('promptView').textContent = blueprint;
-        }
-
-        function smartCopy() {
-            const d = getData();
-            const hasInput = (
-                inputs.brandName.value !== '' || 
-                inputs.industry.value !== '' || 
-                inputs.productName.value !== '' || 
-                inputs.productDesc.value !== '' || 
-                inputs.campaignTemplate.value !== 'NONE' || 
-                inputs.topic.value !== '' || 
-                inputs.format.value !== 'Undecided' || 
-                d.vStyle !== '' ||
-                d.vNar !== '' ||
-                d.vBan !== '' ||
-                inputs.duration.value !== '15s' || 
-                inputs.audiencePreset.value !== '' || 
-                inputs.cta.value !== '' || 
-                inputs.mandatories.value !== ''
-            );
-            
-            let textToCopy = '';
-            if (window.currentView === 'prompt') {
-                textToCopy = document.getElementById('promptView').textContent;
-            } else {
-                if (!hasInput) {
-                    textToCopy = "1. Brand Name\n2. Duration 15s (9:16)\n3. Target Audience General Audience\n4. Language Indonesia";
-                } else {
-                    const rawItems = [
-                        { label: 'Brand:', val: d.brand },
-                        { label: 'Industry Category:', val: d.industry },
-                        { label: 'Product Name:', val: d.product },
-                        { label: 'USP:', val: d.details },
-                        { label: 'Campaign Template:', val: d.campaign },
-                        { label: 'Key Message / Angel Iklan:', val: d.angle },
-                        { label: 'Content Format:', val: d.format },
-                        { label: 'Duration:', val: d.duration },
-                        { label: 'Target Audience:', val: d.audience },
-                        { label: 'Call to Action:', val: d.cta },
-                        { label: 'Language:', val: d.lang },
-                        { label: 'Asset Upload:', val: `Product: ${d.assetProd}, Talent: ${d.assetTalent}` },
-                        { label: 'Brand Mandatories:', val: d.mandatories }
-                    ];
-                    const filtered = rawItems.filter(i => {
-                        if(i.label === 'Brand Name' || i.label === 'Target Audience' || i.label === 'Language' || i.label === 'Duration') return true;
-                        if(i.label === 'Asset Upload:' && i.val === 'Product: No, Talent: No') return false;
-                        return i.val && i.val !== '' && i.val !== 'NONE' && i.val !== 'Undecided';
-                    });
-                    textToCopy = filtered.map((i, idx) => `${idx + 1}. ${i.label} ${i.val}`).join('\n');
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'google-black': '#202124', 
+                        'google-gray': '#5F6368',
+                        'surface': '#F8F9FA',      
+                        'google-red': '#EA4335',
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '4xl': '32px',
+                        'pill': '9999px',
+                    },
+                    aspectRatio: {
+                        '9/16': '9 / 16',
+                    }
                 }
             }
-
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                const btn = document.getElementById('smartCopyBtn');
-                btn.innerHTML = '<span>Ordered</span>';
-                setTimeout(() => btn.innerHTML = '<span>Order</span>', 1500);
-            });
         }
-
-        function switchView(m) {
-            document.getElementById('briefView').style.display = m === 'brief' ? 'block' : 'none';
-            document.getElementById('promptView').style.display = m === 'prompt' ? 'block' : 'none';
-            document.querySelectorAll('.view-btn').forEach((b, i) => b.classList.toggle('active', (i === 0 && m === 'brief') || (i === 1 && m === 'prompt')));
-            window.currentView = m;
-        }
-
-        // TOGGLE CUSTOM INPUTS
-        const toggleMap = {
-            'industry': 'industryCustom',
-            'campaignTemplate': 'campaignCustom',
-            'format': 'formatCustom',
-            'duration': 'durationCustom',
-            'audiencePreset': 'audienceCustom'
-        };
-
-        for (const [selectId, inputId] of Object.entries(toggleMap)) {
-            const select = document.getElementById(selectId);
-            const input = document.getElementById(inputId);
-            if(select && input) {
-                select.addEventListener('change', function() {
-                    input.style.display = this.value === 'Custom' ? 'block' : 'none';
-                });
-            }
-        }
-
-        // FILE HANDLERS
-        ['productPhoto', 'talentPhoto'].forEach(id => {
-            const inp = document.getElementById(id);
-            const btn = (id === 'productPhoto') ? document.getElementById('clearProd') : document.getElementById('clearTalent');
-            inp.onchange = () => { btn.classList.toggle('visible', inp.files.length > 0); render(); };
-            btn.onclick = () => { inp.value = ''; btn.classList.remove('visible'); render(); };
-        });
-
-        // Listeners for Radio/Checkboxes
-        document.addEventListener('change', function(e) {
-            // Logic Checkbox rasa Radio (Mutual Exclusion)
-            if(e.target.name === 'visualMode' || e.target.name === 'narrativeMode') {
-                if(e.target.checked) {
-                    const group = document.querySelectorAll(`input[name="${e.target.name}"]`);
-                    group.forEach(el => {
-                        if(el !== e.target) el.checked = false;
-                    });
-                }
-                render();
-            }
-            // Existing logic
-            else if(e.target.name === 'visualBan' || e.target.name === 'aspectRatio') {
-                render();
-            }
-        });
-
-        Object.values(inputs).forEach(el => { if(el) { el.addEventListener('input', render); el.addEventListener('change', render); }});
-        
-        const resizer = document.getElementById('resizer');
-        const leftPane = document.getElementById('leftPane');
-        resizer.addEventListener('mousedown', e => {
-            const move = ev => leftPane.style.width = ev.clientX + 'px';
-            const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
-            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
-        });
-
-        render();
     </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        body { background-color: #ffffff; color: #202124; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #slider { scroll-behavior: smooth; }
+        .bullet-active { background-color: #202124 !important; width: 1.5rem !important; }
+        
+        /* Menghilangkan outline fokus default pada video */
+        video:focus { outline: none; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-8">
+                <a href="#" class="text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <span class="material-icons-outlined text-3xl text-google-red">bolt</span>
+                    <span class="text-google-black">SPRINT</span>
+                </a>
+                <div class="hidden md:flex gap-6 text-sm font-medium text-google-gray ml-4">
+                    <a href="#process" class="hover:text-google-black transition">Process</a>
+                    <a href="#possibilities" class="hover:text-google-black transition">Possibilities</a>
+                    <a href="#pricing" class="hover:text-google-black transition">Pricing</a>
+                    <a href="#faq" class="hover:text-google-black transition">FAQ</a>
+                </div>
+            </div>
+            
+            <a href="https://budihardoni.github.io/form/" class="bg-google-black text-white text-sm font-semibold px-6 py-3 rounded-pill hover:bg-gray-800 transition flex items-center gap-2">
+                Create Video Ad
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="pt-32 pb-16 px-6 text-center max-w-5xl mx-auto">
+        <h1 class="text-5xl md:text-7xl font-bold mb-6 text-google-black leading-[1.1] tracking-tight">
+            Automated <span class="text-google-red">Brand Content</span><br>
+            <span class="text-google-black">Unimaginably fast.</span>
+        </h1>
+        
+        <p class="text-xl text-google-gray max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+            Turn mobile photos into pro-grade assets. Save time, save cost, and keep your brand consistent with the power of Google-level AI.
+        </p>
+
+        <!-- Visual Flow -->
+        <div class="bg-surface p-6 md:p-12 rounded-[3rem] relative overflow-hidden mb-12 max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-11 gap-4 items-center">
+                
+                <div class="md:col-span-3 flex flex-col items-center">
+
+                    <Image src="https://res.cloudinary.com/drnst0k3a/image/upload/Produk_Anda_g7klcg.jpg" class="max-w-[240px] max-h-full aspect-[3/4] object-cover rounded-3xl"></Image>                
+                    
+                    <p class="mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Produk Anda</p>
+                </div>
+                
+                <div class="md:col-span-1 text-center py-4 md:py-0">
+                    <span class="material-icons-outlined text-gray-300 text-3xl font-light md:hidden">arrow_downward</span>
+                    <span class="material-icons-outlined text-gray-300 text-3xl font-light hidden md:block">arrow_forward</span>
+                </div>
+
+                <div class="md:col-span-3 flex flex-col items-center justify-center min-h-[150px]">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 animate-pulse">
+                    <span class="material-icons-outlined text-google-red text-4xl">bolt</span>
+                    </div> 
+                    <p class="text-xs font-bold text-google-black tracking-widest uppercase">AI Processing...</p>
+                </div>
+
+                <div class="md:col-span-1 text-center py-4 md:py-0">
+                    <span class="material-icons-outlined text-gray-300 text-3xl font-light md:hidden">arrow_downward</span>
+                    <span class="material-icons-outlined text-gray-300 text-3xl font-light hidden md:block">arrow_forward</span>
+                </div>
+
+                <!-- RESULT (FIXED: Removed bg-black and border) -->
+                <div class="md:col-span-3 flex justify-center">
+                    <div class="w-48 md:w-72 aspect-[9/16] rounded-3xl transform rotate-3 shadow-2xl overflow-hidden bg-transparent">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/Result_a7rmuu.mp4" autoplay loop muted playsinline class="w-full h-full object-cover scale-[1.01]"></video>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-center">
+            <a href="https://budihardoni.github.io/form/" class="bg-google-red text-white text-lg font-bold px-10 py-4 rounded-pill hover:bg-red-700 transition transform hover:-translate-y-0.5 shadow-lg shadow-red-200">
+                Create Video Ad
+            </a>
+        </div>
+    </header>
+
+    <!-- Transformation Grid (Process) -->
+    <section id="process" class="py-20 px-4 max-w-6xl mx-auto">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-google-black mb-3">See the magic happen</h2>
+            <p class="text-google-gray">From basic inputs to studio masterpieces.</p>
+        </div>
+        <div class="bg-surface rounded-4xl p-8 mb-8">
+            <div class="flex flex-col md:flex-row items-center justify-around gap-8">
+                <div class="text-center">
+                    <img src="https://res.cloudinary.com/drnst0k3a/image/upload/Product_mwwlyz.jpg" class="w-full max-h-[240px] rounded-2xl mb-4 -rotate-6">
+                    <p class="mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Foto produk anda</p>
+                </div>
+                
+                <span class="material-icons-outlined text-gray-300">add</span>
+
+                <div class="text-center">
+                    <img src="https://res.cloudinary.com/drnst0k3a/image/upload/Ai_Talent_pefqxq.jpg" class="w-full max-h-[240px] rounded-2xl mb-4 rotate-3">
+                    <p class="mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">AI Talent</p>
+                </div>
+
+                <div class="md:col-span-1 text-center py-4 md:py-0">
+                    <span class="material-icons-outlined text-gray-300 text-3xl font-light md:hidden">arrow_downward</span>
+                    <span class="material-icons-outlined text-gray-300 text-3xl font-light hidden md:block">arrow_forward</span>
+                </div>
+
+                <div class="text-center">
+                    <!-- FIXED: Removed bg-black and added scale to ensure fill -->
+                    <div class="relative w-full max-w-[540px] aspect-[16/9] mx-auto rounded-2xl overflow-hidden shadow-xl bg-transparent">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/Singrut_yay3c0.mov" autoplay loop muted playsinline class="w-full h-full object-cover scale-[1.01]"></video>
+                    </div>
+                    <span class="font-bold text-sm text-gray-400 mt-4 block">Iklan siap tayang!</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simple Process Section -->
+    <section id="simple-process" class="py-24 px-6 bg-white">
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-16 md:flex justify-between items-end">
+                <div class="max-w-md">
+                    <h2 class="text-3xl md:text-4xl font-bold text-google-black">Simple Process,<br>Complex Results.</h2>
+                </div>
+                <p class="text-google-gray mt-4 md:mt-0 max-w-sm text-sm">We've simplified the agency workflow into three steps. Everything happens inside our specialized Input Studio.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="p-8 rounded-3xl bg-surface hover:bg-gray-100 transition group">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-6 group-hover:bg-google-black group-hover:text-white transition duration-300">
+                        <span class="material-icons-outlined">upload_file</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">1. Upload Asset</h3>
+                    <p class="text-google-gray text-sm leading-relaxed">Upload your raw product images or sketches directly to our platform.</p>
+                </div>
+
+                <div class="p-8 rounded-3xl bg-surface hover:bg-gray-100 transition group">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-6 group-hover:bg-google-black group-hover:text-white transition duration-300">
+                        <span class="material-icons-outlined">tune</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">2. Configure Input</h3>
+                    <p class="text-google-gray text-sm leading-relaxed">Use our form to define the mood, lighting, and environment you need.</p>
+                </div>
+
+                <div class="p-8 rounded-3xl bg-surface hover:bg-gray-100 transition group">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-6 group-hover:bg-google-black group-hover:text-white transition duration-300">
+                        <span class="material-icons-outlined">download_done</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">3. Receive Assets</h3>
+                    <p class="text-google-gray text-sm leading-relaxed">Get high-resolution assets in less than 24 hours.</p>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="https://budihardoni.github.io/form/" class="inline-flex items-center justify-center bg-google-black text-white font-bold px-12 py-3.5 rounded-pill hover:bg-gray-800 transition">
+                    Create Ad
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Endless Possibilities (Slider) -->
+    <section id="possibilities" class="py-24 bg-white overflow-hidden w-full">
+        <div class="w-full">
+            <div class="text-center mb-12 max-w-7xl mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-3">Endless Possibilities</h2>
+                <p class="text-google-gray">No matter your industry or niche, you imagine it, we create it.</p>
+            </div>
+
+            <div id="slider" class="flex gap-4 overflow-x-auto no-scrollbar pb-4 snap-x snap-mandatory px-6 md:px-0">
+                <div class="w-2 md:w-[5%] shrink-0"></div>
+                
+                <!-- Slide Item 1 (FIXED: Removed bg-black and added scale) -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/1_qnw7lx.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Animasi</p>
+                            <p class="text-gray-300 text-sm mt-1">Produk UMKM</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 2 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/2_btivgp.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Playful</p>
+                            <p class="text-gray-300 text-sm mt-1">Cocokuntuk produk cemilan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 3 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/3_zbv2y5.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Cinematic</p>
+                            <p class="text-gray-300 text-sm mt-1">Untuk Brand Besar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 4 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/4_kditmg.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Superhero</p>
+                            <p class="text-gray-300 text-sm mt-1">Paling pas buat Energy Drink</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 5 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/5_a30nus.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Agency</p>
+                            <p class="text-gray-300 text-sm mt-1">Layanan Service</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 6 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/10_k6t0un.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Informatif</p>
+                            <p class="text-gray-300 text-sm mt-1">Layanan umum</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 7 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/7_mgzwrs.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Kebutuhan rumah</p>
+                            <p class="text-gray-300 text-sm mt-1">Produk rumah tangga</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 8 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/8_cchxb5.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Cinematic</p>
+                            <p class="text-gray-300 text-sm mt-1">Kedai Kopi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 9 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/9_ry2ool.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Moring</p>
+                            <p class="text-gray-300 text-sm mt-1">Produk UMKM</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Item 10 -->
+                <div class="snap-center shrink-0 w-72 md:w-80 group slide-item">
+                    <div class="rounded-3xl overflow-hidden bg-transparent relative aspect-[9/16]">
+                        <video src="https://res.cloudinary.com/drnst0k3a/video/upload/6_hiyrzi.mp4" autoplay loop muted playsinline class="w-full h-full object-cover transition duration-700 group-hover:scale-110 scale-[1.01]"></video>
+                        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                            <p class="text-white font-bold text-xl">Status WA</p>
+                            <p class="text-gray-300 text-sm mt-1">Produk Cemilan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-2 md:w-[5%] shrink-0"></div>
+            </div>
+
+            <!-- Slider Bullets -->
+            <div class="flex justify-center gap-3 mt-8 items-center" id="slider-bullets">
+                <button onclick="scrollToSlide(0)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300 bullet-active"></button>
+                <button onclick="scrollToSlide(1)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(2)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(4)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(5)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(6)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(7)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(8)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(9)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+                <button onclick="scrollToSlide(10)" class="bullet w-2 h-2 bg-gray-300 rounded-full transition-all duration-300"></button>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 px-6 bg-white">
+        <div class="max-w-5xl mx-auto text-center mb-24">
+            <h2 class="text-4xl md:text-5xl font-bold text-google-black mb-4">Start Creating</h2>
+            <p class="text-google-gray mb-16">Pilih paket yang sesuai dengan kebutuhan Anda.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+                <div class="hidden md:block absolute left-1/2 top-10 bottom-10 w-px bg-gray-100"></div>
+
+                <div class="text-center px-4">
+                    <div class="mb-4 text-sm font-semibold text-gray-500">Paling Murah</div>
+                    <div class="flex items-start justify-center gap-1 mb-1">
+                        <span class="text-sm font-medium mt-1 text-gray-500 line-through decoration-red-500 decoration-2">375rb</span>
+                        <span class="text-5xl font-bold text-google-black tracking-tighter">170<span class="text-2xl font-normal">ribu</span></span>
+                    </div>
+                    <div class="text-xs text-gray-400 mb-8">1 Iklan 15 detik</div>
+                    <ul class="space-y-2 mb-10 text-sm font-medium text-google-black">
+                        <li>Cocok untuk UMKM</li>
+                        <li>Format 9:16 untuk story</li>
+                        <li>Kualitas 1080p</li>
+                        <li>Jaminan layak tayang</li>
+                    </ul>
+                    <a href="https://budihardoni.github.io/form/" class="inline-block bg-white border border-gray-300 text-google-black font-bold text-sm px-10 py-3 rounded-pill hover:bg-gray-50 transition">
+                        Ya, Saya mau!
+                    </a>
+                </div>
+
+                <div class="text-center px-4">
+                    <div class="mb-4 text-sm font-semibold text-gray-500">Lagi Promo</div>
+                    <div class="flex items-start justify-center gap-1 mb-1">
+                        <span class="text-sm font-medium mt-1 text-gray-500 line-through decoration-red-500 decoration-2">1,5juta</span>
+                        <span class="text-5xl font-bold text-google-black tracking-tighter">500<span class="text-2xl font-normal">ribu</span></span>
+                    </div>
+                    <div class="text-xs text-gray-400 mb-8">4 Iklan 15 detik</div>
+                    <ul class="space-y-2 mb-10 text-sm font-medium text-google-black">
+                        <li>Untuk yang butuh banyak konten</li>
+                        <li>Pilihan format 16:9 atau 9:16</li>
+                        <li>+</li>
+                        <li>Bonus Gambar</li>
+                    </ul>
+                    <a href="https://budihardoni.github.io/form/" class="inline-block bg-white border border-gray-300 text-google-black font-bold text-sm px-10 py-3 rounded-pill hover:bg-gray-50 transition">
+                        Buat 4 Iklan sekaligus!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto text-center">
+            <h2 class="text-2xl md:text-2xl font-bold text-google-black mb-2">Need Handling your client project with us?</h2>
+            <p class="text-google-gray mb-8">Lebih serius lagi seperti Agency dan Production House untuk klien besar</p>
+            <a href="https://budihardoni.github.io/form/" class="bg-google-red text-white font-bold px-10 py-3.5 rounded-pill hover:bg-red-700 transition transform hover:-translate-y-0.5 shadow-lg shadow-red-200">Call us</a>
+        </div>  
+
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="py-24 px-6 bg-surface">
+        <div class="max-w-3xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Common questions</h2>
+            <div class="space-y-4">
+                <details class="group bg-white rounded-2xl p-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-lg text-google-black">
+                        Emang beneran bisa bikin jualan makin laris?
+                        <span class="material-icons-outlined transform group-open:rotate-180 transition text-gray-400">expand_more</span>
+                    </summary>
+                    <div class="mt-4 text-google-gray text-sm">Visual yang terlihat "mahal" otomatis bikin calon pembeli lebih percaya. Di dunia digital, orang beli pakai mata dulu baru pakai dompet. Konten ini bikin produk Anda punya vibe brand global yang punya budget iklan miliaran. Kalau iklan Anda terlihat lebih berkelas dari kompetitor, tebak siapa yang bakal dipilih calon pembeli?</div>
+                </details>
+
+                <details class="group bg-white rounded-2xl p-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-lg text-google-black">
+                        Kelamaan nunggu konten, keburu trennya basi. Secepat apa prosesnya?
+                        <span class="material-icons-outlined transform group-open:rotate-180 transition text-gray-400">expand_more</span>
+                    </summary>
+                    <div class="mt-4 text-google-gray text-sm">Bisnis Anda nggak boleh kalah cepat sama algoritma. Lupakan proses agensi konvensional yang makan waktu berminggu-minggu sampai momentum hilang. Di sini, hari ini Anda kirim foto produk, besok iklan Anda sudah siap "perang" di media sosial. Kenapa harus nunggu lama kalau besok pagi Anda sudah bisa mulai terima banjir pesanan?</div>
+                </details>
+                <details class="group bg-white rounded-2xl p-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-lg text-google-black">
+                        Budget saya terbatas, emang bisa dapet video kualitas agensi besar?
+                        <span class="material-icons-outlined transform group-open:rotate-180 transition text-gray-400">expand_more</span>
+                    </summary>
+                    <div class="mt-4 text-google-gray text-sm">Ini adalah cheat code buat Anda yang mau tumbuh cepat tanpa bakar uang. Lupakan biaya sewa studio, sewa model, atau bayar kru fotografer yang mahal. Anda bisa hemat biaya produksi sampai 90%. Simpan uangnya, dan alokasikan dananya untuk gas iklan lebih kencang agar profit makin maksimal!</div>
+                </details>
+                <details class="group bg-white rounded-2xl p-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-lg text-google-black">
+                        Gimana cara bikin audiens berhenti scrolling dan langsung klik 'Beli'?
+                        <span class="material-icons-outlined transform group-open:rotate-180 transition text-gray-400">expand_more</span>
+                    </summary>
+                    <div class="mt-4 text-google-gray text-sm">Iklan yang biasa saja cuma bakal dilewati. Fokus utama kami adalah 3 detik pertama; kami menciptakan efek "Wah, apaan nih?" yang bikin jempol audiens berhenti scrolling. Konten yang kami buat dirancang untuk memancing rasa penasaran, membangun keinginan, dan akhirnya memaksa mereka klik tombol beli sekarang juga.</div>
+                </details>
+                <details class="group bg-white rounded-2xl p-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-lg text-google-black">
+                         Apa saya bebas pakai videonya di semua platform tanpa biaya tambahan?
+                        <span class="material-icons-outlined transform group-open:rotate-180 transition text-gray-400">expand_more</span>
+                    </summary>
+                    <div class="mt-4 text-google-gray text-sm">100% milik Anda. Tanpa biaya tersembunyi, tanpa ribet urusan lisensi. Mau dipasang di TikTok, Instagram Ads, YouTube, atau status WhatsApp sekalipun, bebas! Ini adalah aset jangka panjang untuk memperkuat identitas brand Anda. Sekali bayar, untungnya berkali-kali lipat</div>
+                </details>
+                <details class="group bg-white rounded-2xl p-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-lg text-google-black">
+                         Cuma dapet satu video aja atau gimana?
+                        <span class="material-icons-outlined transform group-open:rotate-180 transition text-gray-400">expand_more</span>
+                    </summary>
+                    <div class="mt-4 text-google-gray text-sm">Zaman sekarang, satu konten nggak cukup. Anda butuh banyak variasi buat tes pasar. Sekarang memungkinkan Anda punya stok konten iklan yang melimpah tanpa bikin pusing. Makin banyak variasi video yang Anda punya, makin besar jaring yang Anda tebar untuk menangkap calon pembeli. Siap kebanjiran notifikasi pesanan?</div>
+                </details>
+            </div>
+                <div class="mt-10 text-center">
+                <p class="text-google-gray mb-4">Cukup 1 klik untuk ubah stok foto HP jadi mesin uang.</p>
+                <a href="https://budihardoni.github.io/form/" class="bg-google-red text-white font-bold px-10 py-3.5 rounded-pill hover:bg-red-700 transition transform hover:-translate-y-0.5 shadow-lg shadow-red-200 inline-block">
+                    Buatkan Video Iklan produk Saya!
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white py-12">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex flex-col md:flex-row items-center gap-2">
+                <span class="material-icons-outlined text-google-black text-xl">bolt</span>
+                <span class="text-lg font-bold text-google-black">SPRINT</span>
+                <div class="flex gap-4 text-google-black md:ml-4">
+                    <a href="#" class="hover:text-gray-600 transition"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="hover:text-gray-600 transition"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="#" class="hover:text-gray-600 transition"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="text-xs text-google-black">
+                &copy; 2026 SPRINT. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+        <script>
+        const slider = document.getElementById('slider');
+        const bullets = document.querySelectorAll('.bullet');
+
+        function scrollToSlide(index) {
+            const items = document.querySelectorAll('.slide-item');
+            if (items[index]) {
+                const scrollPos = items[index].offsetLeft - (slider.offsetWidth / 2) + (items[index].offsetWidth / 2);
+                slider.scrollTo({ left: scrollPos, behavior: 'smooth' });
+            }
+        }
+
+        // AKURASI TINGGI: Mendeteksi slide aktif berdasarkan posisi tengah slider
+        slider.addEventListener('scroll', () => {
+            const items = document.querySelectorAll('.slide-item');
+            const sliderCenter = slider.scrollLeft + (slider.offsetWidth / 2);
+            
+            let current = 0;
+            let minDistance = Infinity;
+
+            // Jika posisi scroll mentok ke kiri (awal), paksa aktifkan bullet 0
+            if (slider.scrollLeft < 10) {
+                current = 0;
+            } else {
+                items.forEach((item, index) => {
+                    const itemCenter = item.offsetLeft + (item.offsetWidth / 2);
+                    const distance = Math.abs(sliderCenter - itemCenter);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        current = index;
+                    }
+                });
+            }
+
+            bullets.forEach((bullet, idx) => {
+                if (idx === current) {
+                    bullet.classList.add('bullet-active');
+                } else {
+                    bullet.classList.remove('bullet-active');
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
