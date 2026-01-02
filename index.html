@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📝 Brief</title>
+    <title>📝 Setup iklan</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -84,11 +84,13 @@
 
         select {
             appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23202124%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23202124%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%0-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
             background-position: right 16px top 50%;
             background-size: 10px auto;
         }
+
+        .custom-input { margin-top: 10px; display: none; background: #fff; }
 
         .view-toggle { display: flex; background: #e8eaed; padding: 4px; border-radius: var(--radius-btn); margin-bottom: 15px; width: fit-content; margin-left: auto; }
         .view-btn { padding: 8px 20px; border: none; background: transparent; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: var(--radius-btn); color: #5f6368; transition: 0.2s; }
@@ -97,8 +99,9 @@
         .output-box { flex: 1; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-container); overflow: hidden; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         .brief-content { padding: 30px; line-height: 1.4; font-size: 14px; overflow-y: auto; height: 100%; }
         .brief-item { display: flex; border-bottom: 1px solid #f1f3f4; padding: 12px 0; align-items: flex-start; justify-content: flex-start; }
-        .brief-key { font-weight: 700; width: 180px; color: #444; flex-shrink: 0; padding-right: 10px; line-height: 1.5; }
+        .brief-key { font-weight: 700; width: 220px; color: #444; flex-shrink: 0; padding-right: 10px; line-height: 1.5; }
         .brief-val { color: #202124; font-weight: 500; flex: 1; text-align: left !important; white-space: pre-wrap; line-height: 1.5; }
+        .output-section-header { font-weight: 800; color: #5f6368; margin: 15px 0 10px; font-size: 13px; text-transform: uppercase; border-bottom: 1px solid #e8eaed; padding-bottom: 3px; }
 
         .prompt-content { background: var(--code-bg); color: var(--code-text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 25px; white-space: pre-wrap; line-height: 1.8; height: 100%; overflow-y: auto; display: none; }
         
@@ -120,12 +123,13 @@
 </head>
 <body>
     <div class="container">
+        <!-- LEFT INPUT -->
         <div class="input-section" id="leftPane">
-            <h2>📝 Setup iklan</h2>
+            <h2>Setup iklan</h2>
 
-            <div class="section-title" style="margin-top:0">A. Brand & Campaign Context</div>
+            <div class="section-title" style="margin-top:0">A. ESSENTIAL</div>
             <div class="form-group">
-                <label>1. Nama brand</label>
+                <label>1. Nama Brand</label>
                 <input type="text" id="brandName" placeholder="Contoh: Makaroni Ngehe, Maternal, atau Brand Kamu...">
             </div>
 
@@ -146,7 +150,7 @@
                     <option value="Jasa Profesional">11. Jasa Profesional (logistik, hukum, desain)</option>
                     <option value="Other">12. Lainnya / Tidak Yakin</option>
                 </select>
-                <input type="text" id="industryOther" class="custom-input" style="display:none" placeholder="Sebutkan industri Anda...">
+                <input type="text" id="industryOther" class="custom-input" placeholder="Sebutkan industri Anda...">
             </div>
 
             <div class="form-group">
@@ -155,7 +159,7 @@
             </div>
 
             <div class="form-group">
-                <label>4. Keunggulan Produk (USP)</label>
+                <label>4. Keunggulan produk (USP)</label>
                 <textarea id="usp" placeholder="Contoh: 'Satu-satunya keripik tanpa minyak goreng, harga hanya 15 ribu.'"></textarea>
             </div>
 
@@ -176,11 +180,10 @@
                 <input type="text" id="audienceOther" class="custom-input" style="display:none" placeholder="Sebutkan target audiens...">
             </div>
 
-            <div class="section-title">B. Content Strategy</div>
             <div class="form-group">
                 <label>6. Tujuan iklan (campaign goal)</label>
                 <div class="option-group">
-                    <label class="check-item"><input type="radio" name="goal" value="Launch produk baru"> 1. Launch produk / layanan baru</label>
+                    <label class="check-item"><input type="radio" name="goal" value="Launch produk / layanan baru"> 1. Launch produk / layanan baru</label>
                     <label class="check-item"><input type="radio" name="goal" value="Perkenalan brand"> 2. Perkenalan brand</label>
                     <label class="check-item"><input type="radio" name="goal" value="Promosi & penjualan"> 3. Promosi & penjualan</label>
                     <label class="check-item"><input type="radio" name="goal" value="Campaign musiman"> 4. Campaign musiman / event</label>
@@ -197,7 +200,7 @@
             </div>
 
             <div class="form-group">
-                <label>8. Bahasa</label>
+                <label>8. Bahasa<span style="vertical-align: super; font-size: 0.8em; color: #d93025;">*</span>
                 <select id="language">
                     <option value="Indonesia">1. Indonesia</option>
                     <option value="Inggris">2. Inggris</option>
@@ -205,15 +208,7 @@
             </div>
 
             <div class="form-group">
-                <label>9. Aspek rasio</label>
-                <select id="aspectRatio">
-                    <option value="Portrait / Vertikal (9:16)">1. Portrait / Vertikal (9:16)</option>
-                    <option value="Landscape / Horizontal (16:9)">2. Landscape / Horizontal (16:9)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>10. Format konten iklan</label>
+                <label>9. Format konten iklan</label>
                 <div class="option-group">
                     <label class="check-item"><input type="radio" name="format" value="Belum ditentukan / bebas"> 1. Belum ditentukan / bebas</label>
                     <label class="check-item"><input type="radio" name="format" value="UGC / creator style"> 2. UGC / creator style</label>
@@ -228,7 +223,7 @@
             </div>
 
             <div class="form-group">
-                <label>11. Gaya visual</label>
+                <label>10. Gaya visual</label>
                 <select id="visualStyle">
                     <option value="Natural">1. Natural (dokumenter, vlog, keseharian)</option>
                     <option value="Dramatis">2. Dramatis (visual 'wah', iklan TV)</option>
@@ -237,7 +232,7 @@
             </div>
 
             <div class="form-group">
-                <label>12. Gaya bicara</label>
+                <label>11. Gaya bicara</label>
                 <select id="voiceTone">
                     <option value="Jelas (Lugas, informatif, serius)">1. Jelas (lugas, informatif, serius)</option>
                     <option value="Santai (Fun, ringan, bahasa teman)">2. Santai (fun, ringan, bahasa teman)</option>
@@ -246,30 +241,40 @@
             </div>
 
             <div class="form-group">
-                <label>13. Call to Action (CTA)</label>
+                <label>12. Call to Action (CTA)</label>
                 <input type="text" id="cta" placeholder="Contoh: 'Klik link di bio', 'Beli sekarang'">
             </div>
 
-            <div class="section-title">C. Asset & Policy</div>
-            
+            <div class="section-title">B. MEDIA & ASSET</div>
+            <div class="form-group">
+                <label>13.Durasi dan rasio<span style="vertical-align: super; font-size: 0.8em; color: #d93025;">*</span></label>
+                <select id="aspectRatio">
+                    <option value="15s (9:16)">15s (9:16)</option>
+                    <option value="15s (16:9)">15s (16:9)</option><!--
+                    <option value="30s (9:16)">3. 30s (9:16)</option>
+                    <option value="30s (16:9)">4. 30s (16:9)</option>-->
+                </select>
+            </div>
+
             <div class="form-group">
                 <label>14. Unggah foto</label>
                 <span class="helper">Visual produk atau kemasan utama.</span>
                 <input type="file" id="fileUpload">
                 <div class="option-group check-row" style="margin-top:10px">
-                    <label class="check-item"><input type="checkbox" id="checkProduk"> Produk</label>
-                    <label class="check-item"><input type="checkbox" id="checkTalent"> Talent</label>
+                    <label class="check-item" style="display:none"><input type="checkbox" id="checkTalent" checked> Talent</label> <!-- hidden but default checked based on prompt -->
+                    <label class="check-item"><input type="checkbox" id="checkTalentVisible"> Talent</label>
+                    <label class="check-item"><input type="checkbox" id="checkProduk"> Product</label>
                     <label class="check-item"><input type="checkbox" id="checkLogo"> Logo</label>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>15. Brand guidelines (opsional)</label>
+                <label>15. Brand guidelines / ketentuan visual (opsional)</label>
                 <textarea id="guidelines" placeholder="Contoh: 'Wajib tampilkan logo di akhir'"></textarea>
             </div>
 
             <div class="form-group">
-                <label>16. Narasi (opsional)</label>
+                <label>16. Script (optional)</label>
                 <textarea id="narasi" placeholder="Paste di sini..."></textarea>
             </div>
 
@@ -277,10 +282,11 @@
 
         <div class="resizer" id="resizer"></div>
 
+        <!-- RIGHT OUTPUT -->
         <div class="output-section">
             <div class="view-toggle">
                 <button class="view-btn active" onclick="switchView('brief')">Preview</button>
-                <button class="view-btn" onclick="switchView('prompt')">Blueprint</button>
+                <button class="view-btn" onclick="switchView('prompt')">Brief</button>
             </div>
 
             <div class="output-box">
@@ -290,7 +296,7 @@
 
             <div class="action-bar">
                 <button class="btn btn-primary" onclick="copyText()">
-                    <span>Copy</span>
+                    <span>Generate</span>
                 </button>
             </div>
         </div>
@@ -301,14 +307,14 @@
             const select = document.getElementById(selectId);
             const other = document.getElementById(otherId);
             if(select && other) {
-                other.style.display = select.value === 'Other' ? 'block' : 'none';
+                other.style.display = (select.value === 'Other' || select.value === 'Lainnya / tidak yakin') ? 'block' : 'none';
             }
             render();
         }
 
         function getData() {
             const getV = (id) => document.getElementById(id).value;
-            const getC = (id) => document.getElementById(id).checked ? 'Yes' : 'No';
+            const getC = (id) => document.getElementById(id).checked ? 'Yes' : '';
             const getRadio = (name) => {
                 const el = document.querySelector(`input[name="${name}"]:checked`);
                 return el ? el.value : '';
@@ -316,24 +322,24 @@
             return {
                 "Nama Brand": getV('brandName'),
                 "Industri": getV('industry') === 'Other' ? getV('industryOther') : getV('industry'),
-                "Nama Produk": getV('productName'),
-                "USP": getV('usp'),
-                "Target Audiens": getV('audience') === 'Other' ? getV('audienceOther') : getV('audience'),
-                "Tujuan Iklan": getRadio('goal'),
-                "Pesan Utama": getV('mainMessage'),
+                "Nama produk": getV('productName'),
+                "Keunggulan Produk (USP)": getV('usp'),
+                "Target audiens (consumer profile)": getV('audience') === 'Other' ? getV('audienceOther') : getV('audience'),
+                "Tujuan iklan (campaign goal)": getRadio('goal'),
+                "Pesan utama iklan": getV('mainMessage'),
                 "Bahasa": getV('language') || "Indonesia",
-                "Aspek Rasio": getV('aspectRatio') || "Portrait / Vertikal (9:16)",
-                "Format Konten": getRadio('format'),
-                "Gaya Visual": getV('visualStyle') || "Natural",
-                "Gaya Bicara": getV('voiceTone') || "Jelas (Lugas, informatif, serius)",
-                "CTA": getV('cta'),
+                "Format konten iklan": getRadio('format'),
+                "Gaya visual": getV('visualStyle') || "Natural",
+                "Gaya bicara": getV('voiceTone') || "Jelas (Lugas, informatif, serius)",
+                "Call to Action (CTA)": getV('cta'),
+                "Durasi dan rasio": getV('aspectRatio') || "15s (16:9)",
                 "Unggah foto": {
                     produk: getC('checkProduk'),
-                    talent: getC('checkTalent'),
+                    talent: getC('checkTalentVisible'),
                     logo: getC('checkLogo')
                 },
-                "Guidelines": getV('guidelines'),
-                "Narasi": getV('narasi')
+                "Brand guidelines / ketentuan visual": getV('guidelines'),
+                "Script": getV('narasi')
             };
         }
 
@@ -341,20 +347,45 @@
             const data = getData();
             let html = '';
             let raw = "";
-            const coreKeys = ["Bahasa", "Aspek Rasio", "Gaya Visual", "Gaya Bicara", "Unggah foto"];
+            let idx = 1; 
+            const coreKeys = ["Bahasa", "Durasi dan rasio", "Gaya visual", "Gaya bicara", "Unggah foto"];
+            
+            // ESSENTIAL HEADER
+            html += '<div class="output-section-header">A. ESSENTIAL</div>';
+            raw += "A. ESSENTIAL\n";
 
-            Object.entries(data).forEach(([key, val]) => {
-                if(val || coreKeys.includes(key)) {
+            const entries = Object.entries(data);
+            
+            entries.forEach(([key, val], i) => {
+                // Section B Header insert
+                if (key === "Durasi dan rasio") {
+                    html += '<div class="output-section-header">B. MEDIA & ASSET</div>';
+                    raw += "\nB. MEDIA & ASSET\n";
+                    idx = 13;
+                }
+
+                if(val || coreKeys.includes(key) || (typeof val === 'object' && key === "Unggah foto")) {
                     if(key === "Unggah foto") {
-                        const previewStr = `Produk (${val.produk}), Talent (${val.talent}), Logo (${val.logo})`;
-                        html += `<div class="brief-item"><div class="brief-key">${key}</div><div class="brief-val">${previewStr}</div></div>`;
-                        raw += `${key}:\nProduk: ${val.produk}\nTalent: ${val.talent}\nLogo: ${val.logo}\n`;
+                        html += `<div class="brief-item">
+                                    <div class="brief-key">${idx}. ${key}:</div>
+                                        Talent: ${val.talent || 'No'}, 
+                                        Product: ${val.produk || 'Yes'}, 
+                                        Logo: ${val.logo || 'No'}
+                                    
+                                 </div>`;
+                        raw += `${idx}. ${key}:\n   - Talent: ${val.talent || 'No'}\n   - Product: ${val.produk || 'Yes'}\n   - Logo: ${val.logo || 'No'}\n`;
+                        idx++;
                     } else {
-                        html += `<div class="brief-item"><div class="brief-key">${key}</div><div class="brief-val">${val}</div></div>`;
-                        raw += `${key}: ${val}\n`;
+                        html += `<div class="brief-item">
+                                    <div class="brief-key">${idx}. ${key}:</div>
+                                    <div class="brief-val">${val}</div>
+                                 </div>`;
+                        raw += `${idx}. ${key}: ${val}\n`;
+                        idx++;
                     }
                 }
             });
+
             document.getElementById('briefView').innerHTML = html;
             document.getElementById('promptView').textContent = raw;
         }
@@ -365,7 +396,7 @@
             const btns = document.querySelectorAll('.view-btn');
             btns.forEach(btn => {
                 const btnText = btn.innerText.toLowerCase();
-                if ((mode === 'brief' && btnText === 'preview') || (mode === 'prompt' && btnText === 'blueprint')) {
+                if ((mode === 'brief' && btnText === 'preview') || (mode === 'prompt' && btnText === 'brief')) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -377,8 +408,8 @@
             const text = document.getElementById('promptView').textContent;
             navigator.clipboard.writeText(text).then(() => {
                 const btn = document.querySelector('.btn-primary span');
-                btn.textContent = "Copied";
-                setTimeout(() => btn.textContent = "Copy", 2000);
+                btn.textContent = "Generated";
+                setTimeout(() => btn.textContent = "Generate", 200);
             });
         }
 
