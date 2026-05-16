@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#07080f;--s1:#0d0e18;--s2:#12131f;--s3:#181928;--border:#1e2030;--border2:#282a40;
+  --bg:#111315;--s1:#1b1d20;--s2:#24272b;--s3:#2b2f34;--border:#34383e;--border2:#4a4f57;
   --accent:#ff3d5a;--gold:#f0b429;--green:#00e5a0;--blue:#3d9eff;--purple:#a855f7;--cyan:#06d6b0;--orange:#ff6b35;
-  --text:#eeeef5;--text2:#7878a0;--text3:#3e3f58;
+  --text:#e8eaed;--text2:#bdc1c6;--text3:#8b9097;
   --m1:#3d9eff;--m2:#00e5a0;--m3:#a8d8ff;--m4:#ff3d5a;--m5:#ff6b35;--m6:#ff1744;--m7:#a855f7;--m8:#f0b429;--m9:#ff006e;
   --veo:#3d9eff;--s20:#a855f7;--s15:#00e5a0;--mf:#f0b429;--av:#ff6b35;
 }
@@ -49,7 +49,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:20p
 .search-wrap input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px 12px 8px 32px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;transition:border-color .13s;}
 .search-wrap input:focus{border-color:var(--border2);}
 .search-wrap input::placeholder{color:var(--text3);font-size:11px;}
-.si{position:absolute;left:27px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none;}
+.si{position:absolute;left:27px;top:38%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none;}
 
 .dlist{display:flex;flex-direction:column;gap:3px;padding:0 15px 14px;max-height:calc(100vh - 280px);overflow-y:auto;}
 .dlist::-webkit-scrollbar{width:2px;}
@@ -968,7 +968,9 @@ Ketika input diterima:
    - {{PANEL_DUR}}     → di dalam JSON (auto-calc)
    - {{NEG}}, {{CONTINUITY_LOCK}} → di dalam JSON
    ─────────────────────────────────────────────────────────────────────────*/
-storyboard: `{{DIRECTOR_CARD}}
+storyboard_classic: `{{DIRECTOR_CARD}}
+
+{{SELECTED_DIRECTORS}}
 
 {{STORYLINE}}Durasi        : {{DURASI}}
 Aspect Ratio  : {{ASPECT_RATIO}}
@@ -980,7 +982,7 @@ PROMPT:
 \`\`\`json
 {
   "project_name": "Universal_Storyboard_Generator",
-  "version": "4.0_Pitch_Ready",
+  "version": "4.2.1_Pitch_Ready",
   "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
 
   "input_requirements": {
@@ -993,6 +995,54 @@ PROMPT:
     "optional_from_user": [
       "Industry/Category (e.g., F&B, Fashion)",
       "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "layout_contract": {
+    "canvas_aspect_ratio": "{{ASPECT_RATIO}}",
+    "grid": {
+      "columns": 3,
+      "rows": 3,
+      "total_panels": 9
+    },
+    "panel_geometry": {
+      "rule": "Each individual panel must mirror the canvas orientation and use identical dimensions.",
+      "if_canvas_is_9:16": "Each panel MUST be portrait/taller-than-wide. Use vertical framing, full-body vertical compositions, top-to-bottom staging, and tall environmental shots. NO horizontal or landscape composition inside any panel.",
+      "if_canvas_is_16:9": "Each panel MUST be landscape/wider-than-tall. Use horizontal framing, wide establishing compositions, side-by-side staging, and panoramic environments. NO portrait or vertical composition inside any panel.",
+      "if_canvas_is_1:1": "Each panel MUST be square.",
+      "dimension_math": "Panel width = total canvas width / 3. Panel height = total canvas height / 3.",
+      "all_panels_identical_size": true
+    },
+    "seamless_panel_join": {
+      "rule": "ZERO gap between panels. Panel edges touch directly.",
+      "forbidden": [
+        "visible grid lines",
+        "panel borders",
+        "white gaps",
+        "black lines",
+        "gray lines",
+        "gutters",
+        "margins",
+        "padding",
+        "cell spacing",
+        "background canvas visible between panels"
+      ]
+    },
+    "hard_forbidden": [
+      "2-column layout",
+      "5-row layout",
+      "landscape panels inside 9:16 canvas",
+      "portrait panels inside 16:9 canvas",
+      "comic layout",
+      "variable panel sizes",
+      "mixed panel orientations"
+    ],
+    "final_geometry_check": [
+      "Is the full canvas exactly {{ASPECT_RATIO}}?",
+      "Is the grid exactly 3 columns x 3 rows?",
+      "Are all 9 panels identical size?",
+      "Does every panel mirror the canvas orientation?",
+      "If any answer is NO, rebuild the layout before rendering."
     ]
   },
 
@@ -1010,10 +1060,11 @@ PROMPT:
 
     "layout_enforcement": {
       "description": "Mengunci isu ukuran panel yang tidak konsisten akibat 'Semantic Bias' (kata cinematic memaksa AI membuat widescreen).",
-      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID.",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. layout_contract is higher priority than story, camera, director style, and product framing.",
       "instructions": [
         "Divide the image into exactly 3 horizontal rows and 3 vertical columns.",
         "ALL 9 PANELS MUST HAVE EXACTLY IDENTICAL DIMENSIONS AND ASPECT RATIOS.",
+        "EACH PANEL MUST MIRROR THE CANVAS ORIENTATION: portrait panels for 9:16, landscape panels for 16:9.",
         "NO comic book layouts. NO overlapping frames. NO varying sizes. NO white space between panels.",
         "ANTI_BIAS_PROTOCOL: Ignore keywords like 'cinematic, widescreen, anamorphic' when determining panel shape. The grid structure is the highest law."
       ]
@@ -1070,7 +1121,222 @@ PROMPT:
 
 ---
 
-*END — STORYBOARD GENERATOR v4.0*`,
+*END — STORYBOARD GENERATOR v4.2.1 CLASSIC*`,
+
+/* ── STORYBOARD MODULAR ─────────────────────────────────────────────────────
+   Editable prompt JSON untuk mode Modular.
+   Version lock: 4.0_Pitch_Ready
+   Gunakan placeholder JSON-safe: {{DIRECTOR_CARD_JSON}}, {{BRAND_PRODUCT_JSON}},
+   {{STORYLINE_JSON}}, {{ADDITIONAL_DIRECTOR_CARDS_JSON}}
+   ─────────────────────────────────────────────────────────────────────────*/
+storyboard_modular: `{{DIRECTOR_CARD}}
+
+{{SELECTED_DIRECTORS}}
+
+Durasi        : {{DURASI}}
+Aspect Ratio  : {{ASPECT_RATIO}}
+Total Panels  : 9
+Panel Duration: {{PANEL_DUR}}
+
+PROMPT:
+\`\`\`json
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.0_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: eksplorasi ide liar namun kohesif berdasarkan Director Card dan input brand, lalu render menjadi 9-Panel Storyboard 8K untuk pitching klien.",
+  "input_data": {
+    "brand_product": {{BRAND_PRODUCT_JSON}},
+    "storyline": {{STORYLINE_JSON}},
+    "duration": "{{DURASI}}",
+    "aspect_ratio": "{{ASPECT_RATIO}}",
+    "panel_duration": "{{PANEL_DUR}}",
+    "director_card": {{DIRECTOR_CARD_JSON}},
+    "additional_director_cards": {{ADDITIONAL_DIRECTOR_CARDS_JSON}}
+  },
+  "layout_contract": {
+    "canvas_aspect_ratio": "{{ASPECT_RATIO}}",
+    "grid": {
+      "columns": 3,
+      "rows": 3,
+      "total_panels": 9
+    },
+    "panel_geometry": {
+      "rule": "Each individual panel must mirror the canvas orientation and use identical dimensions.",
+      "if_canvas_is_9:16": "Each panel MUST be portrait/taller-than-wide. Use vertical framing, full-body vertical compositions, top-to-bottom staging, and tall environmental shots. NO horizontal or landscape composition inside any panel.",
+      "if_canvas_is_16:9": "Each panel MUST be landscape/wider-than-tall. Use horizontal framing, wide establishing compositions, side-by-side staging, and panoramic environments. NO portrait or vertical composition inside any panel.",
+      "dimension_math": "Panel width = total canvas width / 3. Panel height = total canvas height / 3.",
+      "all_panels_identical_size": true
+    },
+    "hard_forbidden": [
+      "2-column layout",
+      "5-row layout",
+      "landscape panels inside 9:16 canvas",
+      "portrait panels inside 16:9 canvas",
+      "comic layout",
+      "variable panel sizes",
+      "visible gutters",
+      "borders",
+      "white gaps",
+      "mixed panel orientations"
+    ],
+    "final_geometry_check": [
+      "Is the full canvas exactly {{ASPECT_RATIO}}?",
+      "Is the grid exactly 3 columns x 3 rows?",
+      "Are all 9 panels identical size?",
+      "Does every panel mirror the canvas orientation?",
+      "If any answer is NO, rebuild the layout before rendering."
+    ]
+  },
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: warna, bentuk, material)",
+      "3. Director Card otomatis dari field input_data.director_card"
+    ],
+    "optional_from_user": [
+      "Industry/Category dari input_data.brand_product",
+      "Specific Concept dari input_data.storyline; jika kosong, AI auto-generate berdasarkan Director Card"
+    ]
+  },
+  "core_engines": {
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze Director Card [PART A] and brand/product input to create a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas director.",
+        "PRODUCT AS HERO: Produk menjadi katalis cerita, bukan tempelan.",
+        "ESCALATION: Panel 1-3 setup, Panel 4-6 konflik/anomali visual, Panel 7-9 klimaks/resolusi/product shot."
+      ]
+    },
+    "layout_enforcement": {
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. layout_contract is higher priority than story, camera, director style, and product framing.",
+      "instructions": [
+        "Divide the image into exactly 3 horizontal rows and 3 vertical columns.",
+        "ALL 9 PANELS MUST HAVE EXACTLY IDENTICAL DIMENSIONS AND ASPECT RATIOS.",
+        "EACH PANEL MUST MIRROR THE CANVAS ORIENTATION: portrait panels for 9:16, landscape panels for 16:9.",
+        "NO comic book layouts. NO overlapping frames. NO varying sizes. NO white space between panels."
+      ]
+    },
+    "product_lockdown": {
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "Shape, color, and material from Product_Text_Lock must remain accurate.",
+        "Apply director style only to environment, background, characters, lighting, and grade."
+      ]
+    },
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy."
+    }
+  },
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca brand_product, storyline, Product_Text_Lock, dan director_card.",
+    "STEP_2_SCENE_BUILDING": "Susun 9 adegan dengan framing visual spesifik.",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula.",
+    "STEP_4_RENDER_LOCK": "Terapkan layout_enforcement dan negative_prompts.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks di dalam gambar."
+  }
+}
+\`\`\`
+
+---
+
+*END — STORYBOARD GENERATOR v4.0 MODULAR*`,
+
+/* ── STORYBOARD MEET ────────────────────────────────────────────────────────
+   Editable prompt JSON untuk mode Meet.
+   Version lock: 4.0_Pitch_Ready
+   Fokus: Main Director Card + full card additional directors.
+   ─────────────────────────────────────────────────────────────────────────*/
+storyboard_meet: `MAIN DIRECTOR CARD:
+{{DIRECTOR_CARD}}
+
+MEET DIRECTOR CARDS:
+{{ADDITIONAL_DIRECTOR_CARDS}}
+
+{{STORYLINE}}Durasi        : {{DURASI}}
+Aspect Ratio  : {{ASPECT_RATIO}}
+Total Panels  : 9
+Panel Duration: {{PANEL_DUR}}
+
+PROMPT:
+\`\`\`json
+{
+  "project_name": "Universal_Storyboard_Generator_Meet_Mode",
+  "version": "4.0_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: membuat eksplorasi 9-panel dari MAIN DIRECTOR CARD yang bertemu dengan MEET DIRECTOR CARDS tanpa kehilangan karakter masing-masing.",
+  "input_data": {
+    "brand_product": {{BRAND_PRODUCT_JSON}},
+    "storyline": {{STORYLINE_JSON}},
+    "duration": "{{DURASI}}",
+    "aspect_ratio": "{{ASPECT_RATIO}}",
+    "main_director_card": {{DIRECTOR_CARD_JSON}},
+    "meet_director_cards": {{ADDITIONAL_DIRECTOR_CARDS_JSON}}
+  },
+  "layout_contract": {
+    "canvas_aspect_ratio": "{{ASPECT_RATIO}}",
+    "grid": {
+      "columns": 3,
+      "rows": 3,
+      "total_panels": 9
+    },
+    "panel_geometry": {
+      "rule": "Each individual panel must mirror the canvas orientation and use identical dimensions.",
+      "if_canvas_is_9:16": "Each panel MUST be portrait/taller-than-wide. Use vertical framing, full-body vertical compositions, top-to-bottom staging, and tall environmental shots. NO horizontal or landscape composition inside any panel.",
+      "if_canvas_is_16:9": "Each panel MUST be landscape/wider-than-tall. Use horizontal framing, wide establishing compositions, side-by-side staging, and panoramic environments. NO portrait or vertical composition inside any panel.",
+      "dimension_math": "Panel width = total canvas width / 3. Panel height = total canvas height / 3.",
+      "all_panels_identical_size": true
+    },
+    "hard_forbidden": [
+      "2-column layout",
+      "5-row layout",
+      "landscape panels inside 9:16 canvas",
+      "portrait panels inside 16:9 canvas",
+      "comic layout",
+      "variable panel sizes",
+      "visible gutters",
+      "borders",
+      "white gaps",
+      "mixed panel orientations"
+    ],
+    "final_geometry_check": [
+      "Is the full canvas exactly {{ASPECT_RATIO}}?",
+      "Is the grid exactly 3 columns x 3 rows?",
+      "Are all 9 panels identical size?",
+      "Does every panel mirror the canvas orientation?",
+      "If any answer is NO, rebuild the layout before rendering."
+    ]
+  },
+  "meet_rules": [
+    "Main Director adalah fondasi cerita dan pacing.",
+    "Additional directors mempengaruhi visual, tone, camera, lighting, motion, atau world-building.",
+    "Jangan mencampur gaya secara acak; tentukan peran tiap director dalam visual language.",
+    "Output harus tetap satu konsep kohesif, bukan beberapa konsep terpisah."
+  ],
+  "layout_enforcement": {
+    "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. layout_contract is higher priority than story, camera, director style, and product framing.",
+    "instructions": [
+      "Exactly 3 rows and 3 columns.",
+      "All 9 panels have identical dimensions.",
+      "Each panel must mirror canvas orientation: portrait panels for 9:16, landscape panels for 16:9.",
+      "No visible grid lines, borders, gutters, margins, or white gaps."
+    ]
+  },
+  "product_lockdown": {
+    "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE."
+  },
+  "negative_prompts": {
+    "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, visible grid, borders, dividers, white gaps, distorted product, morphed logo, extra fingers, cartoon, lowres, bad anatomy."
+  }
+}
+\`\`\`
+
+---
+
+*END — STORYBOARD GENERATOR v4.0 MEET*`,
 
 
 /* ── SCRIPT ──────────────────────────────────────────────────────────────────
@@ -6704,7 +6970,7 @@ let tabState = {
     selectedDirectors:[], // ← TAMBAH INI — array of director indices
     durasi:'15s', endpoint:'Standard', audioMode:'@Audio Sync' 
   },
-  storyboard: { storyline:'', durasi:'15s', aspectRatio:'9:16' },
+  storyboard: { storyline:'', durasi:'15s', aspectRatio:'9:16', promptMode:'classic', selectedDirectors:[] },
   script:     { storyline:'', notes:'', durasi:'15s', selectedDirectors:[] },
   veo:        { script:'', selectedDirectors:[], durasi:'15s', panelAktif:'Ekstrak dari storyboard', platform:'Flow', metode:'Ai Provide based on storyboard', audioMode:'Mix' },
   seed20:     { script:'', durasi:'15s', panelAktif:'Ekstrak dari storyboard', platform:'BytePlus Console', endpoint:'Standard', audioMode:'@Audio Sync' },
@@ -6731,7 +6997,10 @@ function buildRadioGroup(tabKey, stateKey, options) {
     const inp = document.createElement('input');
     inp.type='radio'; inp.name=`${tabKey}_${stateKey}`; inp.value=opt;
     if (tabState[tabKey][stateKey] === opt) inp.checked=true;
-    const sp = document.createElement('span'); sp.textContent=opt;
+    const sp = document.createElement('span');
+    sp.textContent = stateKey === 'promptMode'
+      ? ({classic:'Classic', modular:'Modular', meet:'Meet'}[opt] || opt)
+      : opt;
     lbl.appendChild(inp); lbl.appendChild(sp);
     lbl.addEventListener('click', () => {
       tabState[tabKey][stateKey] = opt;
@@ -6982,7 +7251,10 @@ if (curDest === 'full') {
 }
 
   // ── Get template for current tab ─────────────────────────────────────────
-  const template = PROMPTS[curDest];
+  const template =
+    curDest === 'storyboard'
+      ? (PROMPTS[`storyboard_${s.promptMode || 'classic'}`] || PROMPTS.storyboard_classic)
+      : PROMPTS[curDest];
   if (!template) return { main: '' };
 
   // ── Build conditional blocks ─────────────────────────────────────────────
@@ -7002,6 +7274,18 @@ if (curDest === 'full') {
       if (dirLines) selectedDirBlock = `Additional Directors:\n${dirLines}\n`;
     }
 
+  const selectedDirectorCards = (s.selectedDirectors || [])
+    .filter(idx => directors[idx])
+    .map((idx, i) => `MEET DIRECTOR ${i + 1}:\n${buildDirectorCardPartAB(directors[idx])}`)
+    .join('\n\n---\n\n');
+  const selectedDirectorCardsJson = JSON.stringify(
+    (s.selectedDirectors || [])
+      .filter(idx => directors[idx])
+      .map(idx => buildDirectorCardPartAB(directors[idx])),
+    null,
+    2
+  );
+
   // STORYLINE (storyboard, script) — block form for display section
   const storylineBlock = s.storyline
     ? `Storyline     : ${s.storyline}\n`
@@ -7009,6 +7293,9 @@ if (curDest === 'full') {
 
   // STORYLINE inline for JSON
   const storylineInline = s.storyline || '(From Director Card story direction)';
+  const brandProductRaw = buildDataBlock()
+    ? buildDataBlock()
+    : tabState.brief.brandProduct || '';
 
   // SCRIPT — only if filled
   const scriptBlock = s.script
@@ -7030,11 +7317,12 @@ ${s.script}\n\n`
     DIRECTOR_CARD:    dirCard,
     CONCEPT:          conceptBlock,
     SELECTED_DIRECTORS: selectedDirBlock, // ← TAMBAH INI    
-    BRAND_PRODUCT:    buildDataBlock()
-                        ? `${buildDataBlock()}\n\n`
-                        : tabState.brief.brandProduct
-                        ? `${tabState.brief.brandProduct}\n\n`
-                        : '',
+    BRAND_PRODUCT:    brandProductRaw ? `${brandProductRaw}\n\n` : '',
+    DIRECTOR_CARD_JSON: JSON.stringify(dirCard),
+    BRAND_PRODUCT_JSON: JSON.stringify(brandProductRaw || ''),
+    STORYLINE_JSON: JSON.stringify(s.storyline || ''),
+    ADDITIONAL_DIRECTOR_CARDS: selectedDirectorCards || '(No additional director cards selected)',
+    ADDITIONAL_DIRECTOR_CARDS_JSON: selectedDirectorCardsJson,
     STORYLINE:        storylineBlock,
     STORYLINE_INLINE: storylineInline,
     SCRIPT:           scriptBlock,
@@ -7100,21 +7388,1229 @@ function renderOutput() {
 
   // Part B quick copy
   const d = directors[selIdx]; const b = d.partB;
-  const showPB = ['veo','seed20','seed15','mf','avatar','full'].includes(curDest);
+  const showPB = ['storyboard','veo','seed20','seed15','mf','avatar','full'].includes(curDest);
   const pbSec = document.getElementById('partbSection');
   pbSec.style.display = showPB ? 'block' : 'none';
   if (showPB) {
     const grid = document.getElementById('partbGrid'); grid.innerHTML='';
 
     // Reset grid style tergantung tab
-    if (curDest === 'full') {
+    if (curDest === 'full' || curDest === 'storyboard') {
       grid.style.display = 'block'; // ← matikan grid 2 kolom dari partb-grid
     } else {
       grid.style.display = '';      // ← kembalikan ke default grid 2 kolom
     }    
 
+    // ── STORYBOARD → dedicated 3-column quick copy ────────────────────────
+    if (curDest === 'storyboard') {
+      // ================================================================
+      // DATA STORYBOARD — Update isi prompt Storyboard di sini.
+      // Struktur: { label, prompt } per panel, per kolom.
+      // Untuk prompt multiline/JSON dan variabel ${...}, pakai backtick: prompt:`...`
+      // Dibuat terpisah dari TAB FULL agar isinya bisa berbeda.
+      // ================================================================
+      const _dirName = d.name;
+      const _dirMode = `${d.modeNum} — ${d.mode}`;
+      const _directorCard = buildDirectorCardPartAB(d);
+      const _selectedDirectors = (() => {
+        const sel = tabState.storyboard.selectedDirectors;
+        if (!sel || sel.length === 0) return '';
+        return sel
+          .filter(idx => directors[idx])
+          .map(idx => `${directors[idx].name}`)
+          .join(' ');
+      })();
+
+      const col1 = [
+        { label:'STORYBOARD CARD', prompt:'' },
+        { label:'STORYBOARD 4.2.1', prompt:`${_directorCard}
+
+Additional Directors: ${_selectedDirectors}
+Aspect Ratio: 9:16
+Mode ${_dirMode}
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.2.1_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
+      "3. Director Card (Data JSON/Teks gaya sutradara)"
+    ],
+    "optional_from_user": [
+      "Industry/Category (e.g., F&B, Fashion)",
+      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "layout_contract": {
+    "canvas_aspect_ratio": "9:16",
+    "grid": {
+      "columns": 3,
+      "rows": 3,
+      "total_panels": 9
+    },
+    "panel_geometry": {
+      "rule": "Each individual panel must mirror the canvas orientation and use identical dimensions.",
+      "if_canvas_is_9:16": "Each panel MUST be portrait/taller-than-wide. Use vertical framing, full-body vertical compositions, top-to-bottom staging, and tall environmental shots. NO horizontal or landscape composition inside any panel.",
+      "if_canvas_is_16:9": "Each panel MUST be landscape/wider-than-tall. Use horizontal framing, wide establishing compositions, side-by-side staging, and panoramic environments. NO portrait or vertical composition inside any panel.",
+      "dimension_math": "Panel width = total canvas width / 3. Panel height = total canvas height / 3.",
+      "all_panels_identical_size": true
+    },
+    "hard_forbidden": [
+      "2-column layout",
+      "5-row layout",
+      "landscape panels inside 9:16 canvas",
+      "portrait panels inside 16:9 canvas",
+      "comic layout",
+      "variable panel sizes",
+      "visible gutters",
+      "borders",
+      "white gaps",
+      "mixed panel orientations"
+    ],
+    "final_geometry_check": [
+      "Is the full canvas exactly 9:16?",
+      "Is the grid exactly 3 columns x 3 rows?",
+      "Are all 9 panels identical size?",
+      "Does every panel use portrait 9:16 orientation?",
+      "If any answer is NO, rebuild the layout before rendering."
+    ]
+  },
+
+  "core_engines": {
+
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
+        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
+        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
+      ]
+    },
+
+    "layout_enforcement": {
+      "description": "Mengunci dimensi panel agar seragam berdasarkan aspect ratio canvas yang dipilih.",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. PANEL ORIENTATION MUST MIRROR CANVAS ORIENTATION.",
+
+      "seamless_panel_join": {
+        "CRITICAL_RULE": "ZERO gap between all panels. Panels must share edges with no space, line, border, or separator of any kind.",
+        "instructions": [
+          "NO borders, strokes, outlines, or edge lines on any panel.",
+          "NO padding or margin between panels — pixel 0 separation.",
+          "NO background canvas visible between panels.",
+          "Panel edges must bleed directly into adjacent panel edges.",
+          "The 9-panel output is ONE continuous image, not a collage of framed images.",
+          "The grid lines are invisible mathematical dividers only — they must not render as any visible element."
+        ]
+      },
+
+      "aspect_ratio_binding": {
+        "rule": "The orientation of EACH INDIVIDUAL PANEL must match the canvas aspect ratio.",
+        "if_canvas_is_9:16_PORTRAIT": "Each of the 9 panels MUST be TALLER than it is WIDE (portrait/vertical composition). Subjects must be framed vertically. NO landscape or horizontal compositions inside any panel.",
+        "if_canvas_is_16:9_LANDSCAPE": "Each of the 9 panels MUST be WIDER than it is TALL (landscape/horizontal composition). Subjects must be framed horizontally. NO portrait or vertical compositions inside any panel.",
+        "if_canvas_is_1:1_SQUARE": "Each of the 9 panels MUST be perfectly square."
+      },
+
+      "panel_dimension_lock": {
+        "rule": "Divide the TOTAL canvas into exactly 3 columns and 3 rows.",
+        "calculation": "Each panel width = Total canvas width ÷ 3. Each panel height = Total canvas height ÷ 3.",
+        "constraint": "ALL 9 panels share IDENTICAL pixel dimensions. No exceptions."
+      },
+
+      "framing_mandate": {
+        "portrait_canvas_rule": "When canvas is 9:16 — all camera shots must use VERTICAL FRAMING. Prefer: full-body vertical, top-to-bottom compositions, tall environmental shots. FORBIDDEN: wide establishing shots that force horizontal crop inside a panel.",
+        "landscape_canvas_rule": "When canvas is 16:9 — all camera shots must use HORIZONTAL FRAMING. Prefer: wide establishing shots, side-by-side compositions, panoramic environments. FORBIDDEN: narrow vertical portraits inside a panel."
+      },
+
+      "anti_bias_protocol": [
+        "IGNORE semantic pull of words like 'cinematic, widescreen, anamorphic' when determining per-panel composition.",
+        "IGNORE the natural tendency to frame close-up product shots as horizontal.",
+        "The canvas grid geometry is the SUPREME LAW above any compositional instinct.",
+        "Re-confirm before rendering: Is each panel's internal composition orientation matching the canvas orientation? If NO — reframe."
+      ],
+
+      "structural_rules": [
+        "NO comic book layouts.",
+        "NO overlapping frames.",
+        "NO varying panel sizes.",
+        "NO white space or gaps between panels.",
+        "NO mixed orientations within the same grid."
+      ]
+    },
+
+    "product_lockdown": {
+      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
+        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
+        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
+      ]
+    },
+
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy, grid lines, panel borders, white lines, gray lines, black lines, separators, dividers, margins, padding, gaps between panels, frames, outlines, stroke borders, visible grid, canvas background, gutters, cell spacing."
+    }
+  },
+
+  "director_card_mapping": {
+    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
+    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
+    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
+  },
+
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
+    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
+    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
+  },
+
+  "panel_prompt_formula": {
+    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
+    "structure": [
+      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
+      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
+      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
+      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
+      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
+      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
+      "[QUALITY MANDATE]",
+      "--no [GLOBAL_NEG]"
+    ]
+  }
+}
+` },
+        { label:'STORYBOARD 4.0', prompt:`Director: ${_dirName} meet ${_selectedDirectors} (9:16)
+Mode ${_dirMode}
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.2.1_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
+      "3. Director Card (Data JSON/Teks gaya sutradara)"
+    ],
+    "optional_from_user": [
+      "Industry/Category (e.g., F&B, Fashion)",
+      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "core_engines": {
+
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
+        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
+        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
+      ]
+    },
+
+    "layout_enforcement": {
+      "description": "Mengunci dimensi panel agar seragam berdasarkan aspect ratio canvas yang dipilih.",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. PANEL ORIENTATION MUST MIRROR CANVAS ORIENTATION.",
+
+      "seamless_panel_join": {
+        "CRITICAL_RULE": "ZERO gap between all panels. Panels must share edges with no space, line, border, or separator of any kind.",
+        "instructions": [
+          "NO borders, strokes, outlines, or edge lines on any panel.",
+          "NO padding or margin between panels — pixel 0 separation.",
+          "NO background canvas visible between panels.",
+          "Panel edges must bleed directly into adjacent panel edges.",
+          "The 9-panel output is ONE continuous image, not a collage of framed images.",
+          "The grid lines are invisible mathematical dividers only — they must not render as any visible element."
+        ]
+      },
+
+      "aspect_ratio_binding": {
+        "rule": "The orientation of EACH INDIVIDUAL PANEL must match the canvas aspect ratio.",
+        "if_canvas_is_9:16_PORTRAIT": "Each of the 9 panels MUST be TALLER than it is WIDE (portrait/vertical composition). Subjects must be framed vertically. NO landscape or horizontal compositions inside any panel.",
+        "if_canvas_is_16:9_LANDSCAPE": "Each of the 9 panels MUST be WIDER than it is TALL (landscape/horizontal composition). Subjects must be framed horizontally. NO portrait or vertical compositions inside any panel.",
+        "if_canvas_is_1:1_SQUARE": "Each of the 9 panels MUST be perfectly square."
+      },
+
+      "panel_dimension_lock": {
+        "rule": "Divide the TOTAL canvas into exactly 3 columns and 3 rows.",
+        "calculation": "Each panel width = Total canvas width ÷ 3. Each panel height = Total canvas height ÷ 3.",
+        "constraint": "ALL 9 panels share IDENTICAL pixel dimensions. No exceptions."
+      },
+
+      "framing_mandate": {
+        "portrait_canvas_rule": "When canvas is 9:16 — all camera shots must use VERTICAL FRAMING. Prefer: full-body vertical, top-to-bottom compositions, tall environmental shots. FORBIDDEN: wide establishing shots that force horizontal crop inside a panel.",
+        "landscape_canvas_rule": "When canvas is 16:9 — all camera shots must use HORIZONTAL FRAMING. Prefer: wide establishing shots, side-by-side compositions, panoramic environments. FORBIDDEN: narrow vertical portraits inside a panel."
+      },
+
+      "anti_bias_protocol": [
+        "IGNORE semantic pull of words like 'cinematic, widescreen, anamorphic' when determining per-panel composition.",
+        "IGNORE the natural tendency to frame close-up product shots as horizontal.",
+        "The canvas grid geometry is the SUPREME LAW above any compositional instinct.",
+        "Re-confirm before rendering: Is each panel's internal composition orientation matching the canvas orientation? If NO — reframe."
+      ],
+
+      "structural_rules": [
+        "NO comic book layouts.",
+        "NO overlapping frames.",
+        "NO varying panel sizes.",
+        "NO white space or gaps between panels.",
+        "NO mixed orientations within the same grid."
+      ]
+    },
+
+    "product_lockdown": {
+      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
+        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
+        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
+      ]
+    },
+
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy, grid lines, panel borders, white lines, gray lines, black lines, separators, dividers, margins, padding, gaps between panels, frames, outlines, stroke borders, visible grid, canvas background, gutters, cell spacing."
+    }
+  },
+
+  "director_card_mapping": {
+    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
+    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
+    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
+  },
+
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
+    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
+    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
+  },
+
+  "panel_prompt_formula": {
+    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
+    "structure": [
+      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
+      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
+      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
+      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
+      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
+      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
+      "[QUALITY MANDATE]",
+      "--no [GLOBAL_NEG]"
+    ]
+  }
+}
+` },
+        { label:'SCENE', prompt:'' },
+        { label:'Panel 1', prompt:'A single, full-frame vertical close-up shot isolating the [1] TOP-LEFT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'Panel 4', prompt:'A single, full-frame vertical close-up shot isolating the [4] MIDDLE-LEFT panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'Panel 7', prompt:'A single, full-frame vertical close-up shot isolating the [7] BOTTOM-LEFT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'STORYBOARD OLD VERSION', prompt:'' },
+        { label:'STORYBOARD 2.6', prompt:`${_dirName} (9:16)
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "2.6",
+  "ai_role": "Visual Director AI. Tugas: Menggabungkan Image Input User dengan 'Visual Signature' Sutradara untuk menghasilkan Storyboard 9-Panel Photorealistic 8K.",
+
+  "global_settings": {
+    "quality_mandate": {
+      "LIVE_ACTION": "MANDATORY ADDITIONS: 'Hyperrealistic, 8k, UHD, Phase One Camera, Professional Color Grading, Masterpiece, Arri Alexa'.",
+      "ANIMATION": "MANDATORY ADDITIONS: 'Masterpiece, 4k, High Quality Render, Detailed Line Art, Vibrant Colors, Trending on ArtStation, Unblur'."
+    },
+    "negative_prompts": {
+      "UNIVERSAL": "text, watermark, label, title, logo, low quality, blurry, distorted face, bad anatomy, extra fingers, messy composition, ugliness, distorted logo, misspelled brand name.",
+      "IF_LIVE_ACTION": "cartoon, illustration, drawing, sketch, anime, 3d render, painting, cel shaded.",
+      "IF_ANIMATION": "photorealistic, photograph, real human skin texture, hyperrealism, grainy footage."
+    },
+    "consistency_protocol": {
+      "instruction": "THE INPUT IMAGE SUBJECT IS SACRED. It must be the anchor in every panel.",
+      "anchor_points": [
+        "LOGO VISIBILITY: Brand logo from input must remain legible and accurate unless 'DISTORTION' event explicitly warps it.",
+        "PRODUCT SILHOUETTE: The shape of the product must match the input image exactly.",
+        "COLOR PALETTE: Primary brand colors from input must take precedence over Director's color grading."
+      ],
+      "product_handling": {
+        "CRITICAL_RULE": "THE PRODUCT IS AN INANIMATE OBJECT (BENDA MATI).",
+        "instruction": "Even in Animation/Pixar styles, DO NOT turn the product packaging into a character. Apply the 'Cute/3D' style to the LIGHTING and BACKGROUND only.",
+        "forbidden_traits": "NO eyes on packaging. NO mouth on packaging. NO arms/legs on packaging. NO facial expressions on the product itself."
+      },
+      "style_application": "Apply the Director's style to the ENVIRONMENT, LIGHTING, and TEXTURE, but maintain the STRUCTURAL INTEGRITY of the Product Input."
+    },    
+    "clean_output_protocol": {
+      "CRITICAL_RULE": "DO NOT RENDER EVENT NAMES AS TEXT.",
+      "negative_prompts": {
+        "UNIVERSAL": "text, watermark, label, title, caption, ui elements, panel names, typography, written description, signature.",
+        "PRODUCT_SPECIFIC": "eyes on product, mouth on product, face on packaging, anthropomorphic product, product with limbs, cartoon face on object, distorted logo, misspelled brand name."
+      }
+    },
+    "layout_enforcement": {
+      "CRITICAL_RULE": "STRICT 3x3 UNIFORM GRID. NO DYNAMIC COMIC LAYOUTS.",
+      "math_logic": "Canvas Aspect Ratio MUST MATCH Panel Aspect Ratio for a 3x3 Grid.",
+      "instructions": [
+        "Create 9 panels of EXACTLY EQUAL SIZE.",
+        "Perfect alignment.",
+        "No overlapping panels.",
+        "No varying sizes.",
+        "No comic book style montage.",
+        "Think 'Instagram Grid' or 'Contact Sheet', NOT 'Comic Book'."
+      ]
+    },
+
+    "aspect_ratio_controller": {
+      "policy": "DEFAULT TO VERTICAL (9:16) UNLESS SPECIFIED OTHERWISE.",
+      "detection_rule": "Scan User Input/Prompt for format keywords.",
+      "triggers": {
+        "force_landscape": ["16:9", "landscape", "horizontal", "youtube", "tv", "cinema", "widescreen"],
+        "force_portrait": ["9:16", "portrait", "vertical", "tiktok", "reels", "shorts", "story"]
+      },
+      "modes": {
+        "DEFAULT_MODE": "VERTICAL (9:16). Generate a 3x3 Grid where EACH PANEL is Tall/Vertical (9:16).",
+        "OVERRIDE_MODE": "HORIZONTAL (16:9). Generate a 3x3 Grid where EACH PANEL is Wide/Landscape (16:9)."
+      }
+    },
+    "output_format": "Single Image containing 3x3 Grid."
+  },
+
+  "input_configuration": {
+    "source_material": "Analisis gambar user (Produk/Wajah). Use it as the visual anchor.",
+    "matrix_logic": {
+      "definition": "Visual Style (Literal/Exaggerated/Absurd) x Tone (Straight/Playful/Absurd)",
+      "modes": {
+        "1": "LITERAL_STRAIGHT (Realism, Documentary, Raw Emotion)",
+        "2": "LITERAL_PLAYFUL (Witty, Bright, Relatable Comedy)",
+        "3": "LITERAL_ABSURD (Realistic Setting, Strange Events)",
+        "4": "EXAGGERATED_STRAIGHT (Epic, Stylized, High-Budget)",
+        "5": "EXAGGERATED_PLAYFUL (Pop, High Energy, Vibrant)",
+        "6": "EXAGGERATED_ABSURD (Distorted, Uncanny, Intense)",
+        "7": "ABSURD_STRAIGHT (Surreal Art, Dreamlike, Serious)",
+        "8": "ABSURD_PLAYFUL (Whimsical, Wacky, Cartoon Physics)",
+        "9": "ABSURD_ABSURD (Glitch, Chaos, Weirdcore)"
+      }
+    }
+  },
+  
+  "category_map": {
+    "instruction": "Gunakan map ini untuk menentukan template mana yang dipakai berdasarkan kategori sutradara yang dipilih.",
+    "map": {
+      "Food": "FOOD_GLAMOUR", 
+      "Tech": "TECH_INNOVATION",
+      "Fashion": "FASHION_EDITORIAL",
+      "Architecture": "FASHION_EDITORIAL",
+      "Auto": "CINEMATIC_ACTION",
+      "Travel": "CINEMATIC_JOURNEY",
+      "Beauty": "SOCIAL_ASMR",              
+      "Home": "TUTORIAL_HOW_TO",            
+      "Health": "TRANSFORMATION_BEFORE_AFTER", 
+      "Education": "DOCUMENTARY_EMOTION",
+      "Logistics": "TECH_INNOVATION",
+      "Events": "MUSIC_VIDEO_ENERGY",
+      "Comedy": "COMMERCIAL_COMEDY",
+      "Sports": "SPORT_MOTIVATION",         
+      "Surreal": "SURREAL_DREAM",           
+      "Indonesia": "CINEMATIC_DRAMA",
+      "Thailand": "COMMERCIAL_COMEDY",
+      "General": "CINEMATIC_DRAMA"
+    },
+    "default_fallback": "CINEMATIC_DRAMA"
+  },
+
+  "narrative_templates": {
+    "CINEMATIC_DRAMA": { 
+      "row_1": "Wide Establishing Shot (World Building) -> Medium Shot (Character Portrait) -> Close Up (Emotional Trigger)", 
+      "row_2": "Tracking Shot (Action/Movement) -> Over-the-Shoulder (Dialogue/Conflict) -> Low Angle (Power/Scale)", 
+      "row_3": "Epic Wide Shot (Climax) -> Extreme Close Up (Aftermath/Tears) -> Fade to Black (Symbolic End)" 
+    },
+    "CINEMATIC_ACTION": {
+      "row_1": "Detail Shot (Gear/Engine/Weapon) -> Wide Shot (The Arena/Road) -> Zoom In (Focus/Intensity)",
+      "row_2": "High Speed Tracking (Blur/Action) -> Dutch Angle (Chaos/Impact) -> Slow Motion (The Peak Moment)",
+      "row_3": "Wide Shot (Aftermath/Dust Settling) -> Hero Shot (Survivor/Winner) -> Silhouette (Sunset/Exit)"
+    },
+    "COMMERCIAL_LIFESTYLE": { 
+      "row_1": "Macro Shot (Pain Point/Problem) -> Zoom In (Emotional Reaction) -> Product Hero Shot (Dynamic Lighting)", 
+      "row_2": "Action Shot (Product in Use) -> Split Screen/Graphic (Demo/Proof) -> Slow Motion (Satisfaction/Splash)", 
+      "row_3": "Wide Shot (Lifestyle Context) -> Medium Shot (Smile/Eye Contact) -> Graphic Overlay (Logo/Slogan)" 
+    },
+    "COMMERCIAL_COMEDY": {
+      "row_1": "Establishing Normalcy (Boring/Mundane) -> Two-Shot (Dialogue Setup) -> Medium Shot (Awkward Silence/Tension)",
+      "row_2": "The Twist (Unexpected Action) -> Reaction Shot (Shock/Confusion) -> Chaos/Slapstick Moment",
+      "row_3": "The Punchline (Visual Gag) -> Product Reveal (The Cause or Solution) -> Witty Closing Shot"
+    },
+    "TIKTOK_ENGAGEMENT": { 
+      "row_1": "Visual Hook (0-1s Movement) -> Text Overlay (Question/Tease) -> Face Zoom (Expression)", 
+      "row_2": "Whip Pan Transition -> Fast Cuts (Process) -> Freeze Frame (Emphasis)", 
+      "row_3": "Reaction Shot (Genuine Laugh/Shock) -> Pointing to Bio (CTA) -> Seamless Loop Frame" 
+    },
+    "FOOD_GLAMOUR": {
+      "row_1": "Top Down (Knolling Ingredients) -> Macro (Knife Cutting/Splash) -> Slow Mo (Sizzle/Steam)",
+      "row_2": "Tracking Shot (Cooking Action) -> Extreme Macro (Melting/Dripping) -> Steam Rising (Appetite Appeal)",
+      "row_3": "Hand Model (Taking Food) -> Close Up (The Bite/Chew) -> Product Packaging (Clean Background)"
+    },
+    "FASHION_EDITORIAL": {
+      "row_1": "Wide Angle (Architecture/Location) -> Full Body (Avant-Garde Pose) -> Portrait (Intense Stare)",
+      "row_2": "Slow Motion (Fabric Flow/Wind) -> Macro (Accessory/Texture Details) -> Dutch Angle (Edgy Vibe)",
+      "row_3": "Silhouette (Backlit) -> Moving Camera (Runway Walk) -> Minimalist Typography (Brand Name)"
+    },
+    "TECH_INNOVATION": {
+      "row_1": "Rim Light (Dark Background) -> Glint/Flare (Metallic Texture) -> 360 Rotation (Product Hero)",
+      "row_2": "X-Ray View (Internal Components) -> Holographic UI (Screen Display) -> POV (User Hand Interaction)",
+      "row_3": "Wide Shot (Smart Home/Office Context) -> Rack Focus (Device to User) -> Clean Logo Animation"
+    },
+    "MUSIC_VIDEO_ENERGY": {
+      "row_1": "Visual Hook (0-1s Rapid Movement) -> Text Overlay (Tease/Lyrics) -> Face Zoom (Expression)",
+      "row_2": "Whip Pan Transition -> Fast Cuts/Strobe Effect -> Freeze Frame (Emphasis)",
+      "row_3": "Group Shot/Crowd Reaction -> Pointing to Camera (Breaking 4th Wall) -> Seamless Loop Frame"
+    },
+    "DOCUMENTARY_EMOTION": {
+      "row_1": "Handheld Establishing (Raw Environment) -> Close Up (Eyes/Hands texture) -> Interview Setup (Looking off-camera)",
+      "row_2": "B-Roll (Memory/Flashback) -> Shallow Depth (Emotional Detail) -> Wide Shot (Isolation/Reflection)",
+      "row_3": "Medium Shot (Resolution/Smile) -> Candid Moment (Unscripted) -> Fade to Text (Message)"
+    },
+    "CINEMATIC_JOURNEY": {
+      "row_1": "Aerial Drone Shot (Landscape) -> POV (Looking out window) -> Close Up (Map/Ticket)",
+      "row_2": "Motion Blur (Transit) -> Wide Shot (Arrival/Destination) -> Slow Motion (Immersion/Nature)",
+      "row_3": "Medium Shot (Local Interaction) -> Golden Hour (Reflection) -> Wide Shot (Inspiration)"
+    },
+    "SPORT_MOTIVATION": {
+      "row_1": "Silence/Focus (Locker Room/Tunnel) -> Extreme Close Up (Sweat/Heartbeat/Breathing) -> The Arena (Wide Shot/Crowd Noise)",
+      "row_2": "The Struggle (Falling/Failing) -> Grit/Determination (Gritting Teeth) -> Explosion of Power (Sprinting/Hitting)",
+      "row_3": "The Breakthrough (Victory Moment) -> Community/Team Celebration -> Bold Slogan Overlay (Inspirational)"
+    },
+    "SURREAL_DREAM": {
+      "row_1": "Normalcy with a Glitch (Something looks wrong) -> Distortion (Objects melting/floating) -> The Portal (Entering the subconscious)",
+      "row_2": "Morphing Subject (Product changes shape) -> Defying Physics (Walking on walls) -> The Uncanny Valley (Strange stare)",
+      "row_3": "Waking Up? (Ambiguous reality) -> Lingering Mystery Object -> Abstract Logo Reveal"
+    },
+    "SOCIAL_ASMR": {
+      "row_1": "Tapping/Scratching the Packaging (Sound viz) -> Opening/Unboxing (Satisfying Pop/Click) -> Texture Scoop/Touch (Creamy/Crunchy)",
+      "row_2": "Application/The Bite (Extreme Macro) -> Reaction (Eye roll of pleasure/Goosebumps) -> Textural Aftermath (Residue/Crumbs)",
+      "row_3": "Fast Forward (Empty Plate/Bottle) -> Whisper to Camera -> Soft Loop Connector"
+    },
+    "TRANSFORMATION_BEFORE_AFTER": {
+      "row_1": "Desaturated/Gloomy (The 'Before' State) -> Close Up (The Problem Source) -> The Catalyst (Product Entry)",
+      "row_2": "The Process (Fast Forward/Time-lapse) -> Split Screen (Comparison Left vs Right) -> Color Bloom (Saturation returns)",
+      "row_3": "Vibrant/Glowing (The 'After' State) -> Confidence/Interaction -> Graphic Proof (Scientific/Data Overlay)"
+    },
+    "TUTORIAL_HOW_TO": {
+      "row_1": "Finished Result Tease (The Goal) -> Flat Lay (Tools & Ingredients) -> Step 1 (The Setup)",
+      "row_2": "Step 2 (The Crucial Action/Pour/Mix) -> Step 3 (The Secret Hack/Tip) -> Mistake vs Correction (Warning)",
+      "row_3": "Final Reveal (Perfection) -> User Testing it -> Save/Share CTA Icon"
+    }
+  },
+  "director_library": {
+    "commercial_top_picks": 
+[
+  {
+    "Director": "Ridley Scott",
+    "Visual Style": "Atmospheric shafts of light (god rays), smoke and haze, dystopian grandeur, high contrast, epic cinematic scale, masterpiece composition.",
+    "Motion, Transition & Camera Movement": "Slow majestic crane sweeps; lingering wide pans; atmospheric slow-motion.",
+    "Karya (Referensi)": "Apple - \"1984\", Chanel - \"Share the Fantasy\"",
+    "Mode": "Mode 4"
+  },
+  {
+    "Director": "Rocky Morton",
+    "Visual Style": "Classic British humor, quirky characters, slapstick elements, memorable weirdness. (Comedy)",
+    "Motion, Transition & Camera Movement": "Quirky British-slapstick dollies; memorable weirdness pans; classic.",
+    "Karya (Referensi)": "Max Headroom / Super Mario Bros. (1993)",
+    "Mode": "Mode 2"
+  }
+]
+  },
+  "execution_pipeline": {
+    "step_1": "IDENTIFY: Detect Category, Tone, and DIRECTOR TYPE (Live Action vs Animation).",
+    "step_2": "SELECT: Retrieve Director Style Prompt + Narrative Template.",
+    "step_3": "CONFIGURE PROMPTS: \n- IF Director Type is 'ANIMATION': Use 'quality_mandate.ANIMATION' and Combine 'negative_prompts.UNIVERSAL' + 'negative_prompts.IF_ANIMATION'. \n- ELSE (Default): Use 'quality_mandate.LIVE_ACTION' and Combine 'negative_prompts.UNIVERSAL' + 'negative_prompts.IF_LIVE_ACTION'.",
+    "step_4": "CONSTRUCT: Combine Selected Prompts + Row Descriptions + User Image Subject.",
+    "step_5": "ANCHOR SUBJECT: Analyze Input Image. Extract Logo, Shape, and Key Features. INJECT these features into EVERY panel description.",
+    "step_6": "CONSTRUCT: Combine Selected Prompts + Event Vocabulary Definitions + ANCHORED User Subject.",
+    "step_7": "ASPECT RATIO DEFAULT: 9:16. EACH PANEL is Tall/Vertical (9:16). User Input. IF 'Landscape/16:9' found -> Set to 16:9.",
+    "step_8": "GENERATE: Produce 9-panel grid following the specific pacing DNA (e.g., Delay -> Impact -> Silence). Ensure NO TEXT OVERLAYS."
+  }
+}
+` },
+        { label:'STORYBOARD 11', prompt:`${_dirName} (9:16)
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "11.0 - V10 (Gold Master - 8K & Consultant)",
+  "ai_role": "Anda adalah Sutradara Kreatif & Konsultan Visual. Tugas: Edukasi user tentang style, lalu buat Storyboard 9-Panel 'Photorealistic 8K'.",
+  "input_configuration": {
+    "source_material": "Analisis gambar user. Tiru rasio aspeknya.",
+    "consultant_mode": {
+      "instruction": "Jika user buntu/minta ide, tawarkan menu kurasi ini:",
+      "menu": ["Cinematic Luxury", "Cyberpunk 2077", "Wes Anderson Symmetry", "Vintage Kodak Portra", "High-Energy Sport", "Ghibli Anime", "3D Pixar Style", "Claymation", "Dark Gothic"]
+    }
+  },
+  "narrative_logic": {
+    "instruction": "Pilih Template Narrative Flow yang paling sesuai dengan request user. Jika tidak spesifik, gunakan default: CINEMATIC_STORY.",
+    "templates": {
+      "CINEMATIC_STORY": {
+        "description": "Struktur narasi film klasik 3 babak. Fokus pada karakter dan emosi.",
+        "row_1": "ESTABLISHING (Wide Shot/World) -> CHARACTER INTRO (Portrait/Mood) -> INCITING INCIDENT (Something happens)",
+        "row_2": "JOURNEY/PROCESS (Moving/Action) -> CONFLICT (Obstacle/Tension) -> CLIMAX (High Intensity/Battle)",
+        "row_3": "RESOLUTION (Calm/Relief) -> EMOTIONAL AFTERMATH (Close-up) -> FADE OUT (Symbolic Ending)"
+      },
+      "ADS_COMMERCIAL": {
+        "description": "Struktur iklan TV standar: Masalah -> Solusi -> Branding. Fokus hard-selling.",
+        "row_1": "THE PROBLEM (Pain Point/Frustration) -> EMOTIONAL REACTION (Stress/Need) -> THE SOLUTION (Product Reveal/Tease)",
+        "row_2": "KEY BENEFIT (Hero Shot/Action) -> DEMO/PROOF (How it works/Macro) -> 'WOW' MOMENT (Satisfaction)",
+        "row_3": "LIFESTYLE INTEGRATION (Using product) -> HAPPINESS PAYOFF (Smile/Result) -> BRANDING (Logo/Slogan)"
+      },
+      "DOCUMENTARY": {
+        "description": "Gaya jurnalisme/realisme. Handheld, raw, dan wawancara.",
+        "row_1": "ESTABLISHING LOCATION (Drone/Wide) -> SUBJECT INTRODUCTION (Candid) -> SIT-DOWN INTERVIEW SETTING",
+        "row_2": "ARCHIVAL FOOTAGE (Flashback/Grainy) -> B-ROLL ACTION (Handheld) -> EMOTIONAL CLOSE-UP",
+        "row_3": "OBSERVATIONAL SHOT (Silent) -> RESOLUTION MOMENT -> FADE OUT"
+      }
+    }
+  },
+  
+  "narrative_logic": {
+    "instruction": "Pilih Template berdasarkan request. Default: CINEMATIC.",
+    "templates": {
+      "CINEMATIC": { "row_1": "Intro -> Char -> Trigger", "row_2": "Journey -> Conflict -> Tension", "row_3": "Climax -> Aftermath -> Fade" },
+      "ADS_COMMERCIAL": { "row_1": "Problem/Hook -> Emotion -> Product Tease", "row_2": "Demo/Action -> Hero Shot (8K) -> Benefit", "row_3": "Lifestyle Result -> Happy Emotion -> Branding" },
+      "MUSIC_VIDEO": { "row_1": "Mood/Vibe -> Lip-sync -> Artistic", "row_2": "Chaos/Energy -> Visual Effects -> Surrealism", "row_3": "Deep Emotion -> Abstract -> End" },
+      "TIKTOK_VIRAL": { "row_1": "Shocking Hook (0-3s) -> Face Zoom", "row_2": "Fast Transition -> Key Message", "row_3": "Satisfying End -> Loop" }
+    }
+  },
+  "processing_rules": {
+    "quality_mandate": "MANDATORY: Use keywords 'Hyperrealistic, 8k, UHD, Professional Photography, Masterpiece'.",
+    "style_logic": "If user wants 'Anime/Cartoon', keep '8k' but remove 'Photorealistic'. For all else, use 'Photorealistic'.",
+    "consistency": "Subject face & outfit MUST be consistent across 9 panels.",
+    "format": "Single Image Output. Native High Res. No Text Overlay."
+  },
+  "final_prompt_instruction": "EKSEKUSI: 1. Cek jika user butuh saran menu. 2. Tentukan Mode Narasi (Iklan/Musik/dll). 3. Gabungkan Style User + Quality Mandate (8K). 4. Render."
+}
+` },
+        { label:'STORYBOARD 12', prompt:`${_dirName} (9:16)
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "12.0 - V10 (Diamond Edition - Precision Mode)",
+  "ai_role": "Anda adalah Visual Director AI. Tugas: Menggabungkan Image Input User dengan 'Visual Signature' Sutradara untuk menghasilkan Storyboard 9-Panel Photorealistic 8K.",
+  "input_configuration": {
+    "source_material": "Analisis gambar user (Produk/Wajah). Tiru rasio aspek aslinya.",
+    "matrix_logic": {
+      "definition": "Visual Style (Literal/Exaggerated/Absurd) x Tone (Straight/Playful/Absurd)",
+      "modes": {
+        "1": "LITERAL_STRAIGHT (Realism, Documentary, Raw Emotion)",
+        "2": "LITERAL_PLAYFUL (Witty, Bright, Relatable Comedy)",
+        "3": "LITERAL_ABSURD (Realistic Setting, Strange Events)",
+        "4": "EXAGGERATED_STRAIGHT (Epic, Stylized, High-Budget)",
+        "5": "EXAGGERATED_PLAYFUL (Pop, High Energy, Vibrant)",
+        "6": "EXAGGERATED_ABSURD (Distorted, Uncanny, Intense)",
+        "7": "ABSURD_STRAIGHT (Surreal Art, Dreamlike, Serious)",
+        "8": "ABSURD_PLAYFUL (Whimsical, Wacky, Cartoon Physics)",
+        "9": "ABSURD_ABSURD (Glitch, Chaos, Weirdcore)"
+      }
+    }
+  },
+  "director_library": {
+    "commercial_top_picks": [
+      {"id": 1, "name": "Ridley Scott", "mode": 4, "style_prompt": "Atmospheric shafts of light (god rays), smoke and haze, dystopian grandeur, high contrast, epic cinematic scale, masterpiece composition."},
+      {"id": 2, "name": "Bruno Aveillan", "mode": 4, "style_prompt": "Luxury liquid gold aesthetic, macro details of textures, poetic slow motion, ethereal golden lighting, expensive atmosphere."},
+      {"id": 3, "name": "Wes Anderson", "mode": 2, "style_prompt": "Perfect central symmetry, flat pastel color palette, orthographic views, quirky objects, meticulously arranged set design."},
+      {"id": 5, "name": "Guy Ritchie", "mode": 5, "style_prompt": "Snapping camera movements, high-speed editing, freeze frames, gritty urban texture, masculine energy, dynamic POV shots."},
+      {"id": 8, "name": "Wong Kar-wai", "mode": 1, "style_prompt": "Artistic motion blur (step-printing), neon city nights, rain-soaked streets, romantic longing, deep shadows, rich colors."},
+      {"id": 9, "name": "Megaforce", "mode": 8, "style_prompt": "Gravity-defying physics, people flying/floating, magical realism, seamless VFX in natural settings, awe-inspiring wide shots."},
+      {"id": 10, "name": "Kim Gehrig", "mode": 1, "style_prompt": "Raw authenticity, unflinching view of human body, blood and sweat textures, empowering, documentary-style intimacy."},
+      {"id": 14, "name": "The Daniels", "mode": 9, "style_prompt": "Maximalist chaos, morphing objects, inanimate objects coming to life, slapstick physics, insane transitions, multiverse vibe."},
+      {"id": 23, "name": "Michael Bay", "mode": 4, "style_prompt": "Bayhem style, massive explosions, sunset orange and teal grading, low angle spinning camera, lens flares, heroic slow motion."},
+      {"id": 24, "name": "Emmanuel Lubezki", "mode": 1, "style_prompt": "Natural lighting only, ultra-wide angle lenses close to faces, continuous long takes, immersive depth, raw reality."},
+      {"id": 26, "name": "David LaChapelle", "mode": 6, "style_prompt": "Explosive kitsch colors, surreal plastic sets, hyper-glossy skin, provocative pop-art composition, exaggerated saturation."},
+      {"id": 33, "name": "Psyop", "mode": 5, "style_prompt": "Pixar-style 3D character animation, fuzzy textures, magical fantasy worlds, cute characters, vibrant lighting."},
+      {"id": 34, "name": "Man vs Machine", "mode": 7, "style_prompt": "Abstract motion graphics, objects satisfyingly splitting or morphing, high-end 3D textures, physics simulations, clean studio light."},
+      {"id": 51, "name": "Gordon von Steiner", "mode": 4, "style_prompt": "Vogue editorial style, spinning camera rig, models staring into lens, retro-modern fashion, intense gaze, stylish color grading."},
+      {"id": 101, "name": "Alberto Mielgo", "mode": 6, "style_prompt": "Spider-Verse style, mix of 3D and painterly textures, digital glitches, aggressive camera shake, neon rain, cyberpunk aesthetic."},
+      {"id": 103, "name": "Stanley Kubrick", "mode": 7, "style_prompt": "One-point perspective, sterile white/red environments, The Kubrick Stare, symmetrical corridors, psychological tension, cold lighting."},
+      {"id": 106, "name": "Makoto Shinkai", "mode": 1, "style_prompt": "Anime style hyper-realism, detailed clouds and sky, lens flares, trains and power lines, melancholic blue/purple palette, particle effects."},
+      {"id": 114, "name": "Studio Ghibli", "mode": 1, "style_prompt": "Lush hand-painted nature backgrounds, appetizing food, steampunk flying machines, vibrant watercolors, nostalgic summer vibe."}
+    ],
+    "industry_specific": [
+      {"category": "Food", "name": "Michael Roulier", "mode": 4, "style_prompt": "Extreme macro food porn, melting chocolate/cheese, liquid simulation, high-speed photography, studio perfection."},
+      {"category": "Tech", "name": "Patrick Clair", "mode": 4, "style_prompt": "Neon data lines, wireframe holograms, futuristic UI/UX displays, dark cyberpunk aesthetic, elegant info-graphics."},
+      {"category": "Auto", "name": "Mark Jenkinson", "mode": 4, "style_prompt": "High-octane automotive, car x-ray transitions, motion blur asphalt, dust particles, engine mechanics CGI, dynamic speed."},
+      {"category": "Beauty", "name": "Metz + Racine", "mode": 1, "style_prompt": "Still life artistry, architectural arrangement of products, sharp focus, clean hard shadows, minimalist luxury."}
+    ],
+    "comedy_narrative": [
+      {"name": "Tom Kuntz", "mode": 9, "style_prompt": "Absurdist humor, weird characters with intense stares, bizarre loops, surreal logic accepted as normal."},
+      {"name": "Thanonchai Sornsriwichai", "mode": 8, "style_prompt": "Thai ad style, emotional music turning into slapstick comedy, unique casting (non-models), green/dull color grading, chaotic twist."},
+      {"name": "Wes Anderson (Style)", "mode": 2, "style_prompt": "Symmetrical composition, pastel colors, deadpan expressions, quirky props, flat lighting."}
+    ]
+  },
+  "narrative_templates": {
+    "instruction": "Pilih Template berdasarkan request user.",
+    "templates": {
+      "CINEMATIC": { "row_1": "Atmosphere Intro -> Character Intro -> Inciting Incident", "row_2": "Journey/Process -> Conflict/Tension -> Climactic Visual", "row_3": "Resolution -> Emotional Aftermath -> Fade Out" },
+      "COMMERCIAL_PRODUCT": { "row_1": "Problem/Hook (Macro) -> Emotional Reaction -> Product Reveal", "row_2": "Key Benefit (Action) -> Visual Proof (Demo) -> 'Wow' Moment", "row_3": "Lifestyle Integration -> Happiness Payoff -> Brand Logo" },
+      "TIKTOK_ENGAGEMENT": { "row_1": "Visual Hook (0-1s) -> Text Overlay Tease -> Face Zoom", "row_2": "Fast Transition -> Satisfying Process -> Unexpected Twist", "row_3": "Reaction Shot -> Call to Action -> Loop Connector" }
+    }
+  },
+  "processing_rules": {
+    "quality_mandate": "MANDATORY PROMPT ADDITIONS: 'Hyperrealistic, 8k, UHD, Phase One Camera, Professional Color Grading, Masterpiece'.",
+    "style_override": "If user selects 'Anime/Cartoon' director (e.g., Ghibli, Gorillaz), remove 'Photorealistic' but keep 'High Quality/4k'.",
+    "consistency": "Ensure the Product/Subject from the Input Image is consistent across all 9 panels.",
+    "output_format": "Single Image containing 3x3 Grid (Storyboard). No text inside panels unless specified."
+  },
+  "execution_instruction": "1. Analisis Gambar Input. 2. Identifikasi Director/Style yang dipilih user. 3. Ambil 'style_prompt' dari library. 4. Aplikasikan ke dalam 9-Panel Template. 5. Generate."
+}
+` },
+      ];
+
+      const col2 = [
+        { label:'STORYBOARD NAME', prompt:'' },
+        { label:'STORYBOARD 4.0', prompt:`${_directorCard}
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.0_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
+      "3. Director Card (Data JSON/Teks gaya sutradara)"
+    ],
+    "optional_from_user": [
+      "Industry/Category (e.g., F&B, Fashion)",
+      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "core_engines": {
+
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
+        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
+        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
+      ]
+    },
+
+    "layout_enforcement": {
+      "description": "Mengunci isu ukuran panel yang tidak konsisten akibat 'Semantic Bias' (kata cinematic memaksa AI membuat widescreen).",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID.",
+      "instructions": [
+        "Divide the image into exactly 3 horizontal rows and 3 vertical columns.",
+        "ALL 9 PANELS MUST HAVE EXACTLY IDENTICAL DIMENSIONS AND ASPECT RATIOS.",
+        "NO comic book layouts. NO overlapping frames. NO varying sizes. NO white space between panels.",
+        "ANTI_BIAS_PROTOCOL: Ignore keywords like 'cinematic, widescreen, anamorphic' when determining panel shape. The grid structure is the highest law."
+      ]
+    },
+
+    "product_lockdown": {
+      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
+        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
+        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
+      ]
+    },
+
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy."
+    }
+  },
+
+  "director_card_mapping": {
+    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
+    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
+    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
+  },
+
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
+    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
+    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
+  },
+
+  "panel_prompt_formula": {
+    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
+    "structure": [
+      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
+      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
+      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
+      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
+      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
+      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
+      "[QUALITY MANDATE]",
+      "--no [GLOBAL_NEG]"
+    ]
+  }
+}
+` },
+        { label:'STORYBOARD 4.0', prompt:`${_dirName} meet ${_selectedDirectors} (9:16)
+Mode ${_dirMode}
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.2.1_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
+      "3. Director Card (Data JSON/Teks gaya sutradara)"
+    ],
+    "optional_from_user": [
+      "Industry/Category (e.g., F&B, Fashion)",
+      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "core_engines": {
+
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
+        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
+        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
+      ]
+    },
+
+    "layout_enforcement": {
+      "description": "Mengunci dimensi panel agar seragam berdasarkan aspect ratio canvas yang dipilih.",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. PANEL ORIENTATION MUST MIRROR CANVAS ORIENTATION.",
+
+      "seamless_panel_join": {
+        "CRITICAL_RULE": "ZERO gap between all panels. Panels must share edges with no space, line, border, or separator of any kind.",
+        "instructions": [
+          "NO borders, strokes, outlines, or edge lines on any panel.",
+          "NO padding or margin between panels — pixel 0 separation.",
+          "NO background canvas visible between panels.",
+          "Panel edges must bleed directly into adjacent panel edges.",
+          "The 9-panel output is ONE continuous image, not a collage of framed images.",
+          "The grid lines are invisible mathematical dividers only — they must not render as any visible element."
+        ]
+      },
+
+      "aspect_ratio_binding": {
+        "rule": "The orientation of EACH INDIVIDUAL PANEL must match the canvas aspect ratio.",
+        "if_canvas_is_9:16_PORTRAIT": "Each of the 9 panels MUST be TALLER than it is WIDE (portrait/vertical composition). Subjects must be framed vertically. NO landscape or horizontal compositions inside any panel.",
+        "if_canvas_is_16:9_LANDSCAPE": "Each of the 9 panels MUST be WIDER than it is TALL (landscape/horizontal composition). Subjects must be framed horizontally. NO portrait or vertical compositions inside any panel.",
+        "if_canvas_is_1:1_SQUARE": "Each of the 9 panels MUST be perfectly square."
+      },
+
+      "panel_dimension_lock": {
+        "rule": "Divide the TOTAL canvas into exactly 3 columns and 3 rows.",
+        "calculation": "Each panel width = Total canvas width ÷ 3. Each panel height = Total canvas height ÷ 3.",
+        "constraint": "ALL 9 panels share IDENTICAL pixel dimensions. No exceptions."
+      },
+
+      "framing_mandate": {
+        "portrait_canvas_rule": "When canvas is 9:16 — all camera shots must use VERTICAL FRAMING. Prefer: full-body vertical, top-to-bottom compositions, tall environmental shots. FORBIDDEN: wide establishing shots that force horizontal crop inside a panel.",
+        "landscape_canvas_rule": "When canvas is 16:9 — all camera shots must use HORIZONTAL FRAMING. Prefer: wide establishing shots, side-by-side compositions, panoramic environments. FORBIDDEN: narrow vertical portraits inside a panel."
+      },
+
+      "anti_bias_protocol": [
+        "IGNORE semantic pull of words like 'cinematic, widescreen, anamorphic' when determining per-panel composition.",
+        "IGNORE the natural tendency to frame close-up product shots as horizontal.",
+        "The canvas grid geometry is the SUPREME LAW above any compositional instinct.",
+        "Re-confirm before rendering: Is each panel's internal composition orientation matching the canvas orientation? If NO — reframe."
+      ],
+
+      "structural_rules": [
+        "NO comic book layouts.",
+        "NO overlapping frames.",
+        "NO varying panel sizes.",
+        "NO white space or gaps between panels.",
+        "NO mixed orientations within the same grid."
+      ]
+    },
+
+    "product_lockdown": {
+      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
+        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
+        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
+      ]
+    },
+
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy, grid lines, panel borders, white lines, gray lines, black lines, separators, dividers, margins, padding, gaps between panels, frames, outlines, stroke borders, visible grid, canvas background, gutters, cell spacing."
+    }
+  },
+
+  "director_card_mapping": {
+    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
+    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
+    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
+  },
+
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
+    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
+    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
+  },
+
+  "panel_prompt_formula": {
+    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
+    "structure": [
+      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
+      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
+      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
+      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
+      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
+      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
+      "[QUALITY MANDATE]",
+      "--no [GLOBAL_NEG]"
+    ]
+  }
+}
+` },
+        { label:'SCENE', prompt:'' },
+        { label:'Panel 2', prompt:'A single, full-frame vertical close-up shot isolating the [2] TOP-CENTER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'Panel 5', prompt:'A single, full-frame vertical close-up shot isolating the [5] MIDDLE-CENTER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'Panel 8', prompt:'A single, full-frame vertical close-up shot isolating the [8] BOTTOM-CENTER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'PRODUCT GRID S', prompt:'' },
+        { label:'PROD1 S (3x3)', prompt:'Using product image, commercial photography 3x3 grid, 9 angles: front, back, side-left, side-right, 45-degree, top-down, detail, in-use context, packaging close-up. Consistent studio lighting, consistent background, high resolution 8k.' },
+        { label:'PROD2 S (1x3)', prompt:'Using product image, 1x3 commercial grid: front view (center), left side (left panel), right side (right panel). Pure white background, consistent soft studio lighting, no props, no text. Seamless panel borders, high resolution 8k.' },
+        { label:'PROD3 S (1x3)', prompt:'Using product image, 3-panel grid: Panel 1 front-facing, Panel 2 45-degree angle, Panel 3 side profile. White background, uniform diffused lighting, no shadows on background, consistent scale, high resolution 8k.' },
+      ];
+
+      const col3 = [
+        { label:'STORYBOARD MIX', prompt:'' },
+        { label:'STORYBOARD 4.2.1', prompt:`Director: ${_dirName} meet ${_selectedDirectors} (9:16)
+Mode ${_dirMode}
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.2.1_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
+      "3. Director Card (Data JSON/Teks gaya sutradara)"
+    ],
+    "optional_from_user": [
+      "Industry/Category (e.g., F&B, Fashion)",
+      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "core_engines": {
+
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
+        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
+        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
+      ]
+    },
+
+    "layout_enforcement": {
+      "description": "Mengunci dimensi panel agar seragam berdasarkan aspect ratio canvas yang dipilih.",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. PANEL ORIENTATION MUST MIRROR CANVAS ORIENTATION.",
+
+      "seamless_panel_join": {
+        "CRITICAL_RULE": "ZERO gap between all panels. Panels must share edges with no space, line, border, or separator of any kind.",
+        "instructions": [
+          "NO borders, strokes, outlines, or edge lines on any panel.",
+          "NO padding or margin between panels — pixel 0 separation.",
+          "NO background canvas visible between panels.",
+          "Panel edges must bleed directly into adjacent panel edges.",
+          "The 9-panel output is ONE continuous image, not a collage of framed images.",
+          "The grid lines are invisible mathematical dividers only — they must not render as any visible element."
+        ]
+      },
+
+      "aspect_ratio_binding": {
+        "rule": "The orientation of EACH INDIVIDUAL PANEL must match the canvas aspect ratio.",
+        "if_canvas_is_9:16_PORTRAIT": "Each of the 9 panels MUST be TALLER than it is WIDE (portrait/vertical composition). Subjects must be framed vertically. NO landscape or horizontal compositions inside any panel.",
+        "if_canvas_is_16:9_LANDSCAPE": "Each of the 9 panels MUST be WIDER than it is TALL (landscape/horizontal composition). Subjects must be framed horizontally. NO portrait or vertical compositions inside any panel.",
+        "if_canvas_is_1:1_SQUARE": "Each of the 9 panels MUST be perfectly square."
+      },
+
+      "panel_dimension_lock": {
+        "rule": "Divide the TOTAL canvas into exactly 3 columns and 3 rows.",
+        "calculation": "Each panel width = Total canvas width ÷ 3. Each panel height = Total canvas height ÷ 3.",
+        "constraint": "ALL 9 panels share IDENTICAL pixel dimensions. No exceptions."
+      },
+
+      "framing_mandate": {
+        "portrait_canvas_rule": "When canvas is 9:16 — all camera shots must use VERTICAL FRAMING. Prefer: full-body vertical, top-to-bottom compositions, tall environmental shots. FORBIDDEN: wide establishing shots that force horizontal crop inside a panel.",
+        "landscape_canvas_rule": "When canvas is 16:9 — all camera shots must use HORIZONTAL FRAMING. Prefer: wide establishing shots, side-by-side compositions, panoramic environments. FORBIDDEN: narrow vertical portraits inside a panel."
+      },
+
+      "anti_bias_protocol": [
+        "IGNORE semantic pull of words like 'cinematic, widescreen, anamorphic' when determining per-panel composition.",
+        "IGNORE the natural tendency to frame close-up product shots as horizontal.",
+        "The canvas grid geometry is the SUPREME LAW above any compositional instinct.",
+        "Re-confirm before rendering: Is each panel's internal composition orientation matching the canvas orientation? If NO — reframe."
+      ],
+
+      "structural_rules": [
+        "NO comic book layouts.",
+        "NO overlapping frames.",
+        "NO varying panel sizes.",
+        "NO white space or gaps between panels.",
+        "NO mixed orientations within the same grid."
+      ]
+    },
+
+    "product_lockdown": {
+      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
+        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
+        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
+      ]
+    },
+
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy, grid lines, panel borders, white lines, gray lines, black lines, separators, dividers, margins, padding, gaps between panels, frames, outlines, stroke borders, visible grid, canvas background, gutters, cell spacing."
+    }
+  },
+
+  "director_card_mapping": {
+    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
+    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
+    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
+  },
+
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
+    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
+    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
+  },
+
+  "panel_prompt_formula": {
+    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
+    "structure": [
+      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
+      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
+      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
+      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
+      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
+      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
+      "[QUALITY MANDATE]",
+      "--no [GLOBAL_NEG]"
+    ]
+  }
+}
+` },
+        { label:'STORYBOARD 4.0', prompt:`Director: ${_dirName} meet ${_selectedDirectors} (9:16)
+Mode ${_dirMode}
+{
+  "project_name": "Universal_Storyboard_Generator",
+  "version": "4.2.1_Pitch_Ready",
+  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+
+  "input_requirements": {
+    "minimal_input_mode": "ACTIVE",
+    "required_from_user": [
+      "1. Image Input (Visual produk/karakter)",
+      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
+      "3. Director Card (Data JSON/Teks gaya sutradara)"
+    ],
+    "optional_from_user": [
+      "Industry/Category (e.g., F&B, Fashion)",
+      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
+    ]
+  },
+
+  "core_engines": {
+
+    "creative_exploration_engine": {
+      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
+      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
+      "ideation_rules": [
+        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
+        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
+        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
+      ]
+    },
+
+    "layout_enforcement": {
+      "description": "Mengunci dimensi panel agar seragam berdasarkan aspect ratio canvas yang dipilih.",
+      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID. PANEL ORIENTATION MUST MIRROR CANVAS ORIENTATION.",
+
+      "seamless_panel_join": {
+        "CRITICAL_RULE": "ZERO gap between all panels. Panels must share edges with no space, line, border, or separator of any kind.",
+        "instructions": [
+          "NO borders, strokes, outlines, or edge lines on any panel.",
+          "NO padding or margin between panels — pixel 0 separation.",
+          "NO background canvas visible between panels.",
+          "Panel edges must bleed directly into adjacent panel edges.",
+          "The 9-panel output is ONE continuous image, not a collage of framed images.",
+          "The grid lines are invisible mathematical dividers only — they must not render as any visible element."
+        ]
+      },
+
+      "aspect_ratio_binding": {
+        "rule": "The orientation of EACH INDIVIDUAL PANEL must match the canvas aspect ratio.",
+        "if_canvas_is_9:16_PORTRAIT": "Each of the 9 panels MUST be TALLER than it is WIDE (portrait/vertical composition). Subjects must be framed vertically. NO landscape or horizontal compositions inside any panel.",
+        "if_canvas_is_16:9_LANDSCAPE": "Each of the 9 panels MUST be WIDER than it is TALL (landscape/horizontal composition). Subjects must be framed horizontally. NO portrait or vertical compositions inside any panel.",
+        "if_canvas_is_1:1_SQUARE": "Each of the 9 panels MUST be perfectly square."
+      },
+
+      "panel_dimension_lock": {
+        "rule": "Divide the TOTAL canvas into exactly 3 columns and 3 rows.",
+        "calculation": "Each panel width = Total canvas width ÷ 3. Each panel height = Total canvas height ÷ 3.",
+        "constraint": "ALL 9 panels share IDENTICAL pixel dimensions. No exceptions."
+      },
+
+      "framing_mandate": {
+        "portrait_canvas_rule": "When canvas is 9:16 — all camera shots must use VERTICAL FRAMING. Prefer: full-body vertical, top-to-bottom compositions, tall environmental shots. FORBIDDEN: wide establishing shots that force horizontal crop inside a panel.",
+        "landscape_canvas_rule": "When canvas is 16:9 — all camera shots must use HORIZONTAL FRAMING. Prefer: wide establishing shots, side-by-side compositions, panoramic environments. FORBIDDEN: narrow vertical portraits inside a panel."
+      },
+
+      "anti_bias_protocol": [
+        "IGNORE semantic pull of words like 'cinematic, widescreen, anamorphic' when determining per-panel composition.",
+        "IGNORE the natural tendency to frame close-up product shots as horizontal.",
+        "The canvas grid geometry is the SUPREME LAW above any compositional instinct.",
+        "Re-confirm before rendering: Is each panel's internal composition orientation matching the canvas orientation? If NO — reframe."
+      ],
+
+      "structural_rules": [
+        "NO comic book layouts.",
+        "NO overlapping frames.",
+        "NO varying panel sizes.",
+        "NO white space or gaps between panels.",
+        "NO mixed orientations within the same grid."
+      ]
+    },
+
+    "product_lockdown": {
+      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
+      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
+      "instructions": [
+        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
+        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
+        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
+      ]
+    },
+
+    "quality_mandate": {
+      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
+    },
+
+    "negative_prompts": {
+      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy, grid lines, panel borders, white lines, gray lines, black lines, separators, dividers, margins, padding, gaps between panels, frames, outlines, stroke borders, visible grid, canvas background, gutters, cell spacing."
+    }
+  },
+
+  "director_card_mapping": {
+    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
+    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
+    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
+  },
+
+  "execution_pipeline": {
+    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
+    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
+    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
+    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
+    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
+  },
+
+  "panel_prompt_formula": {
+    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
+    "structure": [
+      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
+      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
+      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
+      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
+      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
+      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
+      "[QUALITY MANDATE]",
+      "--no [GLOBAL_NEG]"
+    ]
+  }
+}
+` },
+        { label:'SCENE', prompt:'' },
+        { label:'Panel 3', prompt:'A single, full-frame vertical close-up shot isolating the [3] TOP-RIGHT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'Panel 6', prompt:'A single, full-frame vertical close-up shot isolating the [6] MIDDLE-RIGHT panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'Panel 9', prompt:'A single, full-frame vertical close-up shot isolating the [9] BOTTOM-RIGHT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
+        { label:'PRE/CLIMAX/AFTER', prompt:'' },
+        { label:'-2s', prompt:'Imagine the moment 2 seconds BEFORE this specific panel. (CAUSE). Same setting, exact style match, high resolution 8k.' },
+        { label:'2s+', prompt:'Imagine the moment 2 seconds AFTER this specific panel. (EFFECT). Same setting, exact style match, high resolution 8k.' },
+      ];
+
+      const fc3 = document.createElement('div'); fc3.className='fc3-grid';
+      [
+        { title: '', items: col1 },
+        { title: '', items: col2 },
+        { title: '', items: col3 },
+      ].forEach(({ title, items }) => {
+        const col = document.createElement('div'); col.className='fc3-col';
+        const colTitle = document.createElement('div');
+        colTitle.className = 'fc3-col-title';
+        colTitle.textContent = title;
+        col.appendChild(colTitle);
+        items.forEach(({ label, prompt }) => {
+          const item = document.createElement('div'); item.className='fc3-item';
+          item.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span class="fc3-item-label">${label}</span>
+              <span class="fc3-copy-hint">copy</span>
+            </div>
+            <div class="fc3-item-val">${prompt}</div>`;
+          item.onclick = () => {
+            navigator.clipboard.writeText(prompt).then(() => {
+              item.classList.add('copied');
+              setTimeout(() => item.classList.remove('copied'), 1500);
+            });
+          };
+          col.appendChild(item);
+        });
+        fc3.appendChild(col);
+      });
+      grid.appendChild(fc3);
+
     // ── FULL CARD → 3-column panel quick copy ──────────────────────────────
-    if (curDest === 'full') {
+    } else if (curDest === 'full') {
 
       // ================================================================
       // DATA — Update isi prompt di sini secara mandiri
@@ -7220,7 +8716,7 @@ function renderOutput() {
 // ## VERSI NYAMBUNG
       // ── SELECTED DIRECTORS (Additional Directors dari Brief) ─────────────
       const _selectedDirectors = (() => {
-        const sel = tabState.full.selectedDirectors;
+        const sel = curDest === 'storyboard' ? tabState.storyboard.selectedDirectors : tabState.full.selectedDirectors;
         if (!sel || sel.length === 0) return '';
         const lines = sel
           .filter(idx => directors[idx])
@@ -7230,6 +8726,15 @@ function renderOutput() {
           
         // RETURN TANPA ENTER DI AWAL
         return lines;
+      })();
+
+      const _selectedDirectorCards = (() => {
+        const sel = tabState.full.selectedDirectors;
+        if (!sel || sel.length === 0) return '(No additional directors selected)';
+        return sel
+          .filter(idx => directors[idx])
+          .map((idx, i) => `MEET DIRECTOR ${i + 1}: ${directors[idx].name}\n${buildDirectorCardPartAB(directors[idx])}`)
+          .join('\n\n---\n\n');
       })();
 
 
@@ -7287,309 +8792,326 @@ function renderOutput() {
       // ── CONSTANTS ───────────────────────────────────────────────────────
       const _texture       = TEXTURE;                         // texture string
 
-      const COL1_TITLE = '';  // judul kolom 1
-      const COL2_TITLE = ''; // judul kolom 2
-      const COL3_TITLE = '';  // judul kolom 3
+      const COL1_TITLE = 'Brief Rescue';  // judul kolom 1
+      const COL2_TITLE = 'Director Strategy'; // judul kolom 2
+      const COL3_TITLE = 'Iteration Fix';  // judul kolom 3
 
-      const col1 = [
-        { label:'Panel 1', prompt:'A single, full-frame vertical close-up shot isolating the [1] TOP-LEFT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'Panel 4', prompt:'A single, full-frame vertical close-up shot isolating the [4] MIDDLE-LEFT panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'Panel 7', prompt:'A single, full-frame vertical close-up shot isolating the [7] BOTTOM-LEFT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'PRE/CLIMAX/AFTER',  prompt:'' },
-        { label:'-2s',  prompt:'Imagine the moment 2 seconds BEFORE this specific panel. (CAUSE). Same setting, exact style match, high resolution 8k.' },
-        { label:'2s+',  prompt:'Imagine the moment 2 seconds AFTER this specific panel. (EFFECT). Same setting, exact style match, high resolution 8k.' },
-        { label:'STORYBOARD',   prompt:`${_dirName} meet ${_selectedDirectors} (9:16)\nMode ${_dirMode}
-{
-  "project_name": "Universal_Storyboard_Generator",
-  "version": "4.0_Pitch_Ready",
-  "ai_role": "Agency Creative Director & Master Storyboard Artist. Tugas: Melakukan eksplorasi ide liar namun kohesif berdasarkan Director Card, dan merendernya menjadi 9-Panel Storyboard 8K yang presisi untuk Pitching Klien.",
+      let col1 = [
+        { label:'Brief Rescue', prompt:`Anda adalah senior advertising strategist. Selamatkan dan lengkapi brief campaign yang lemah, minim data, atau salah arah tanpa bertanya ulang kecuali benar-benar wajib.
 
-  "input_requirements": {
-    "minimal_input_mode": "ACTIVE",
-    "required_from_user": [
-      "1. Image Input (Visual produk/karakter)",
-      "2. Product_Text_Lock (Deskripsi literal produk: Warna, bentuk, material. Misal: 'Kaleng silinder merah metalik')",
-      "3. Director Card (Data JSON/Teks gaya sutradara)"
-    ],
-    "optional_from_user": [
-      "Industry/Category (e.g., F&B, Fashion)",
-      "Specific Concept (Jika dikosongkan, AI akan auto-generate ide berdasarkan Director)"
-    ]
-  },
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
-  "core_engines": {
+DIRECTOR CONTEXT:
+${_dirPartAB}
 
-    "creative_exploration_engine": {
-      "description": "Mesin utama untuk mengarang cerita (Storyline) jika user tidak memberikan konsep spesifik.",
-      "instruction": "DO NOT use generic commercial templates. Analyze the Director Card [PART A] and auto-generate a 9-panel high-concept narrative.",
-      "ideation_rules": [
-        "DIRECTOR TROPES: Gunakan ciri khas filmografi director. (Contoh: Jika 'Wong Kar-Wai', buat cerita tentang kerinduan di kota hujan neon. Jika 'Megaforce', buat hukum gravitasi rusak di dunia nyata).",
-        "PRODUCT AS HERO: Integrasikan produk ke dalam cerita bukan sebagai tempelan, tapi sebagai katalis cerita (solusi/pemicu keajaiban).",
-        "ESCALATION: Panel 1-3 (Setup & Dunia), Panel 4-6 (Konflik/Anomali Visual), Panel 7-9 (Klimaks, Resolusi & Epic Product Shot)."
-      ]
-    },
+TASK:
+1. Infer product category, use case, likely buyer, core pain point, desire, dan buying trigger.
+2. Koreksi asumsi target audience dan message yang lemah atau salah arah.
+3. Tulis ulang menjadi production-ready ad brief.
+4. Product truth harus tetap menjadi pusat. Jangan mengejar ide "viral" yang membuat produk tidak relevan.
 
-    "layout_enforcement": {
-      "description": "Mengunci isu ukuran panel yang tidak konsisten akibat 'Semantic Bias' (kata cinematic memaksa AI membuat widescreen).",
-      "CRITICAL_RULE": "ABSOLUTE MATHEMATICAL 3x3 UNIFORM GRID.",
-      "instructions": [
-        "Divide the image into exactly 3 horizontal rows and 3 vertical columns.",
-        "ALL 9 PANELS MUST HAVE EXACTLY IDENTICAL DIMENSIONS AND ASPECT RATIOS.",
-        "NO comic book layouts. NO overlapping frames. NO varying sizes. NO white space between panels.",
-        "ANTI_BIAS_PROTOCOL: Ignore keywords like 'cinematic, widescreen, anamorphic' when determining panel shape. The grid structure is the highest law."
-      ]
-    },
+OUTPUT:
+- Assumptions
+- Corrected Target Audience
+- Product Truth
+- Core Problem
+- Core Promise
+- USP
+- Message Utama
+- CTA
+- Recommended Format
+- Recommended Visual Tone` },
+        { label:'Brief Critic', prompt:`Audit input campaign ini seperti creative director yang ketat dan praktis.
 
-    "product_lockdown": {
-      "description": "Mencegah 'Style Bleed' di mana gaya sutradara merusak bentuk/warna asli produk.",
-      "CRITICAL_RULE": "PRODUCT PHYSICS ARE IMMUNE TO DIRECTOR STYLE.",
-      "instructions": [
-        "The shape, color, and material from 'Product_Text_Lock' must remain 100% accurate in all panels where it appears.",
-        "STYLE ISOLATION: Apply the Director's 'Color Grade' and 'Lighting' ONLY to the ENVIRONMENT, BACKGROUND, and CHARACTERS.",
-        "Example: If Director is 'Wes Anderson' (pastel) but the product is 'Neon Black & Red Cyberpunk Can', the Can STAYS Neon Black & Red. Do not paint the product pastel."
-      ]
-    },
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
-    "quality_mandate": {
-      "RENDER_ENGINE": "Hyperrealistic, 8k resolution, Unreal Engine 5 render style combined with Arri Alexa 65mm photography, masterpiece, award-winning cinematography, ultra-detailed."
-    },
+DIRECTOR CARD:
+${_dirPartAB}
 
-    "negative_prompts": {
-      "GLOBAL_NEG": "text, watermark, typography, UI, comic book borders, asymmetrical grid, varying panel sizes, chaotic layout, landscape panels in portrait canvas, white gaps, distorted product, morphed logo, extra fingers, cartoon, illustration, lowres, bad anatomy."
-    }
-  },
+Temukan:
+1. Field yang terlalu umum.
+2. Field yang kontradiktif.
+3. Target audience yang salah atau terlalu luas.
+4. Pesan yang tidak menjual.
+5. USP yang tidak spesifik.
+6. Risiko output visual bagus tapi produk tidak berbicara.
 
-  "director_card_mapping": {
-    "PART_A_STORY": "Gunakan sebagai landasan 'Creative Exploration Engine' untuk menyusun plot 9 panel.",
-    "PART_B_VISUALS": "Suntikkan token ini ke setiap deskripsi panel untuk membentuk estetika dunia (World-building).",
-    "CONTINUITY_LOCK": "Pastikan elemen yang ada di string ini konsisten dari Panel 1 hingga Panel 9 (misal: Baju karakter sama, grading warna konsisten)."
-  },
+Lalu tulis ulang brief menjadi versi yang lebih tajam dan siap dipakai.` },
+        { label:'10 Campaign Angles', prompt:`Buat 10 campaign angles dari data berikut.
 
-  "execution_pipeline": {
-    "STEP_1_IDEATION": "Baca 'Product_Text_Lock' dan 'Director Card'. Hasilkan konsep cerita 9-adegan yang sangat kreatif, out-of-the-box, dan mewakili 100% gaya sutradara tersebut.",
-    "STEP_2_SCENE_BUILDING": "Untuk setiap adegan (1-9), terjemahkan menjadi framing visual yang spesifik (Close up, Wide Shot, Tracking, dll).",
-    "STEP_3_PROMPT_ASSEMBLY": "Gunakan panel_prompt_formula untuk menyusun perintah gambar.",
-    "STEP_4_RENDER_LOCK": "Terapkan 'layout_enforcement' dan 'negative_prompts' secara ketat.",
-    "STEP_5_OUTPUT": "Hasilkan satu gambar final berisi 9 panel grid seragam, tanpa teks apapun di dalam gambar."
-  },
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
-  "panel_prompt_formula": {
-    "description": "Struktur urutan prompt yang dikirim ke Image Generator per panel.",
-    "structure": [
-      "[PANEL CAMERA SHOT: e.g., Extreme Close Up / Epic Wide Angle]",
-      "[ACTION/SCENE: Apa yang sedang terjadi berdasarkan ideation]",
-      "[PRODUCT ANCHOR: Masukkan Product_Text_Lock jika produk in-frame, dengan penekanan warna asli]",
-      "[DIRECTOR ENVIRONMENT & CHARACTER: Set design, wardrobe]",
-      "[DIRECTOR LIGHTING & COLOR GRADE: Mood pencahayaan untuk background]",
-      "[DIRECTOR VISUAL STYLE: Efek kamera sutradara, misal motion blur/lens flare]",
-      "[QUALITY MANDATE]",
-      "--no [GLOBAL_NEG]"
-    ]
-  }
-}
-` },
+DIRECTOR CARD:
+${_dirPartAB}
+
+Rules:
+- Setiap angle harus punya consumer tension yang berbeda.
+- Produk harus menjadi hero atau catalyst.
+- Hindari ide "viral" generik.
+- Jelaskan kenapa angle tersebut bisa membantu penjualan atau brand recall.
+
+Output table:
+Angle Name | Consumer Tension | Product Role | Hook | Visual Idea | CTA` },
+        { label:'3 Wild Concepts', prompt:`Buat 3 konsep campaign yang bold, berani, tapi tetap berguna secara komersial.
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+DIRECTOR CARD:
+${_dirPartAB}
+
+Rules:
+- Wild visual idea boleh, tapi tidak boleh mengorbankan product truth.
+- Produk harus tetap punya peran jelas dalam cerita.
+- Jelaskan alasan strategis kenapa tiap ide bisa bekerja.
+- Sertakan satu client-safe adjustment untuk tiap konsep.` },
+        { label:'Hook Bank', prompt:`Buat 20 scroll-stopping hooks untuk short-form video.
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+DIRECTOR CARD:
+${_dirPartAB}
+
+Rules:
+- Hook harus cocok dengan produk, bukan sekadar sensasional.
+- Opening 1-3 detik.
+- Campurkan: problem hook, curiosity hook, proof hook, visual shock hook, comedy hook, product-first hook.
+
+Output:
+Hook | Why it works | First visual frame` },
+        { label:'Problem-Solution Map', prompt:`Bangun problem-solution map untuk produk ini.
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+Output:
+- Audience situation
+- Real problem
+- Hidden emotional tension
+- Product role
+- Proof or believable cue
+- Payoff
+- CTA
+- 5 possible ad structures` },
       ];
 
-      const col2 = [
-        { label:'Panel 2', prompt:'A single, full-frame vertical close-up shot isolating the [2] TOP-CENTER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'Panel 5', prompt:'A single, full-frame vertical close-up shot isolating the [5] MIDDLE-CENTER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'Panel 8', prompt:'A single, full-frame vertical close-up shot isolating the [8] BOTTOM-CENTER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'PRODUCT GRID',  prompt:'' },
-        { label:'PROD1 (3x3)',  prompt:'Using product image, commercial photography 3x3 grid, 9 angles: front, back, side-left, side-right, 45-degree, top-down, detail, in-use context, packaging close-up. Consistent studio lighting, consistent background, high resolution 8k. ' },
-        { label:'PROD2 (1x3)',  prompt:'Using product image, 1x3 commercial grid: front view (center), left side (left panel), right side (right panel). Pure white background, consistent soft studio lighting, no props, no text. Seamless panel borders, high resolution 8k. ' },
-        { label:'PROD 3 (1x3)',  prompt:'Using product image, 3-panel grid: Panel 1 front-facing, Panel 2 45-degree angle, Panel 3 side profile. White background, uniform diffused lighting, no shadows on background, consistent scale, high resolution 8k. ' },
+      col2 = [
+        { label:'Director Fit Matrix', prompt:`Evaluasi creative direction mana yang paling cocok untuk campaign ini.
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+CURRENT DIRECTOR:
+${_dirPartAB}
+
+Gunakan kriteria:
+Industry fit, campaign objective, target audience, product role, need for demo, need for emotion, need for comedy, risk level, production complexity.
+
+Output:
+Director/Mode | Score 1-10 | Why it fits | Risk | Best use | Avoid if
+
+Jangan merekomendasikan style yang itu-itu saja. Sertakan minimal satu safe option, satu bold option, dan satu unexpected option.` },
+        { label:'Safe / Bold / Wild', prompt:`Rekomendasikan 3 creative directions untuk campaign ini.
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+CURRENT DIRECTOR:
+${_dirPartAB}
+
+Output:
+1. SAFE - easiest for client approval
+2. BOLD - strongest creative option
+3. WILD - most distinctive but still product-relevant
+
+Untuk masing-masing:
+- Concept
+- Why it fits
+- Risk
+- How to make it sell
+- Suggested storyboard direction` },
+        { label:'Meet Recommender', prompt:`Rekomendasikan additional directors untuk "meet" dengan current director.
+
+MAIN DIRECTOR:
+${_dirPartAB}
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+Rules:
+- Rekomendasi harus berdasarkan kekurangan atau blind spot main director.
+- Jangan hanya memilih nama yang terkenal atau obvious.
+- Sertakan 1 safe pairing, 1 contrast pairing, dan 1 wild pairing.
+
+Output:
+Additional Director | What they add | What to avoid | Best scene use | Resulting hybrid style` },
+        { label:'Mode Explorer', prompt:`Eksplorasi campaign ini melalui Mode 1-9.
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+Untuk setiap mode:
+- Strategic fit
+- Creative opportunity
+- Risk
+- Best hook
+- Best visual direction
+
+Akhiri dengan top 3 recommended modes dan alasannya.` },
+        { label:'Director Risk Audit', prompt:`Audit risiko menggunakan director style ini untuk brand tersebut.
+
+DIRECTOR CARD:
+${_dirPartAB}
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+Check:
+- Brand mismatch
+- Product visibility risk
+- Tone risk
+- Production complexity
+- Audience mismatch
+- Client approval risk
+- Risk of style overpowering product
+
+Lalu berikan fix yang konkret.` },
+        { label:'Client-Safe Direction', prompt:`Ubah direction ini menjadi versi yang lebih client-safe tanpa membuatnya membosankan.
+
+DIRECTOR CARD:
+${_dirPartAB}
+
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
+
+Output:
+- What to keep
+- What to soften
+- What to remove
+- Safer concept
+- Safer hook
+- Safer visual treatment
+- Still-bold element` },
       ];
 
-      const col3 = [
-        { label:'Panel 3', prompt:'A single, full-frame vertical close-up shot isolating the [3] TOP-RIGHT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'Panel 6', prompt:'A single, full-frame vertical close-up shot isolating the [6] MIDDLE-RIGHT panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen.' },
-        { label:'Panel 9', prompt:'A single, full-frame vertical close-up shot isolating the [9] BOTTOM-RIGHT CORNER panel of the reference grid. The scene creates a cohesive single image. High resolution 8k, cinematic lighting, exact style match. IGNORE grid lines, comic borders, and other 8 panels. No split screen. ' },
-        { label:'BRIEF',  prompt:'' },
-        { label:'FORM', prompt:`A. ESSENTIAL
-1. Nama Brand: [Brand name]
-2. Industri: [Pilih: Makanan & Minuman / Kecantikan & Fashion / Produk Rumah Tangga / Bisnis Digital / Travel & Hospitality / Event & Wedding / Otomotif / Properti & Konstruksi / Kesehatan / Pendidikan / Jasa Profesional / Lainnya]
-3. Nama Produk: [Product name]
-4. USP: [Input User — jika kosong: Smart Inference dari image analysis → keyword produk → industry standard pain point]
-5. Target Audiens: [Input User — jika kosong: infer dari nama produk + industri]
-6. Tujuan Iklan: [Launch / Perkenalan Brand / Promosi / Campaign Musiman / Demo & Edukasi / Testimoni / Eksperimen / Optimasi Otomatis]
-7. Pesan Utama: [Input User — jika kosong: Hook Masalah + Produk sebagai Solusi + Benefit Utama]
-8. Bahasa: [Default: Indonesia]
-9. Format Konten: [UGC / Cinematic / Hard Sell / Demo / Testimoni / Comparison / Walkthrough / Animasi — jika kosong: auto-assign dari Tujuan Iklan]
-10. Gaya Visual: [Input User — jika kosong: auto per industri]
-11. Gaya Bicara: [Input User — jika kosong: auto per target audiens]
-12. CTA: [Input User — jika kosong: generate dari Mode + Format + Industri]
+      col3 = [
+        { label:'Prompt Doctor', prompt:`Diagnosis dan perbaiki prompt atau konsep yang tidak bekerja.
 
-B. MEDIA & ASSET
-13. Asset: [User Upload Image]
-14. Brand Guidelines: [jika kosong: ekstrak palette dari gambar produk]` },   
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
-        { label:'HITRON', prompt:`A. ESSENTIAL
-1. Nama Brand: Hitron Sprint
-2. Industri: Bisnis Digital
-3. Nama Produk: Visual Studio Tanpa Studio. Ubah foto produk dari ponsel menjadi aset visual berkelas studio. Efisiensi waktu dan biaya, tanpa kompromi pada kualitas visual Anda.
-4. USP: [Input User — jika kosong: Smart Inference dari image analysis → keyword produk → industry standard pain point]
-5. Target Audiens: 
-6. Tujuan Iklan: Perkenalan Brand / Promosi / Demo & Edukasi
-7. Pesan Utama: 
-8. Bahasa: Indonesia
-9. Format Konten: Cinematic / Hard Sell
+DIRECTOR CARD:
+${_dirPartAB}
 
-B. MEDIA & ASSET
-10. Durasi: [Default: 15s (9:16)]
-11. Asset: [User Upload Image]
-12. Brand Guidelines: [jika kosong: ekstrak palette dari gambar produk]
-13. Gaya Visual: [Input User — jika kosong: auto per industri]
-14. Gaya Bicara: [Input User — jika kosong: auto per target audiens]
-15. CTA: [Input User — jika kosong: generate dari Mode + Format + Industri]
+Paste failed prompt/output setelah baris ini:
+[PASTE HERE]
 
-C. DIRECTOR INPUT 
-16. Director: ${_dirName} Meet ${_selectedDirectors} Mode ${_dirMode}, 
+Periksa:
+- Generic visual
+- Product not acting as hero
+- Conflicting instructions
+- Director style overpowering brand
+- Weak CTA
+- Story not connected panel-to-panel
+- Prompt too long or unfocused
 
+Output:
+Diagnosis | Cause | Fix | Revised Prompt` },
+        { label:'Image Failure Fix', prompt:`Perbaiki kegagalan image/storyboard generation.
 
-    EXPLORE MODE (OPSIONAL):
-    Jika user ingin explore Director X dengan Mode berbeda dari database:
-    → Tambahkan: "Director: [Nama] | Override Mode: [N]"
-    → AI akan reinterpret director's visual style dengan mode yang dipilih user
-    → Tandai output dengan [EXPLORE: Mode Override]` },   
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
+DIRECTOR CARD:
+${_dirPartAB}
 
-        { label:'INPUT', prompt:`## SYSTEM ROLE & OPERATIONAL FRAMEWORK
-Anda beroperasi sebagai **Chief Creative & Brand Strategist (CCBS)** — sistem AI multi-disiplin untuk pemasaran komersial dan produksi audiovisual.
+Failure type:
+[Describe or paste: wrong ratio, wrong grid, product changed, logo broken, inconsistent style, collage look, hands/face broken]
 
-Proses setiap prompt dengan mengintegrasikan 4 kerangka berpikir secara simultan:
-1. **Product Manager** — Ekstraksi *Core Value Proposition* dan *Market Positioning* dari data minimal.
-2. **Marketing Director** — Bangun *Audience Segmentation* (Demografi + Psikografi) dan *Conversion Funnel Logic*.
-3. **Creative Director** — Terjemahkan narasi menjadi *Art Direction, Cinematography, Scene Composition*, dan *Visual Storytelling* yang presisi teknis.
-4. **Copywriter** — Rancang *Persuasive Messaging, Hooks, Pacing*, dan *Action-Driven CTA* berbasis psikologi konsumen.
+Output:
+1. Failure diagnosis
+2. Exact prompt clauses to add
+3. Clauses to remove
+4. Revised negative prompt
+5. Regeneration instruction
+6. Short fixed prompt block` },
+        { label:'Product Hero Fix', prompt:`Tulis ulang konsep ini agar produk benar-benar menjadi hero.
 
-**Misi:** Terima data mentah klien → bangun *Brand Blueprint* solid → keluarkan *Campaign Execution Brief* siap eksekusi tim produksi video. Output harus highly-converting, presisi teknis, dan 100% kongruen dengan gaya sutradara yang ditetapkan.
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
----
+CURRENT DIRECTOR:
+${_dirPartAB}
 
-## DEFINISI: DIRECTOR CARD
+Problem:
+Visual idea mungkin menarik, tetapi produk belum berbicara dengan jelas.
 
-Director Card adalah panduan gaya sinematik. Setiap card berisi:
-- **Nama / Label Gaya:** [Nama sutradara nyata atau kode referensi custom]
-- **Signature Visual:** [Ciri khas kamera, pencahayaan, komposisi frame]
-- **Pacing & Rhythm:** [Tempo editing — lambat sinematik, cepat impulsif, dll]
-- **Color Grade & Mood:** [Palet warna dan tone emosional dominan]
-- **Narrative Mode:** [Cara bercerita — linear, fragmentatif, konfrontatif, puitis, dll]
-- **Referensi Karya:** [Judul film/iklan sebagai acuan]
+Output:
+- Product truth
+- Product role in story
+- Hero moment
+- Proof moment
+- Product close-up instruction
+- CTA integration
+- Revised concept` },
+        { label:'Next Iteration', prompt:`Buat 5 arah iterasi berikutnya dari concept/output saat ini.
 
-*Jika hanya nama sutradara yang dimasukkan tanpa detail → gunakan pengetahuan gaya khasnya secara otomatis. Jika nama tidak dikenali → tulis: "[Nama] tidak ada dalam referensi. Sertakan deskripsi gaya minimal 2 poin." Jangan mengarang gaya sutradara yang tidak diketahui.*
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
----
+DIRECTOR CARD:
+${_dirPartAB}
 
-## WORKFLOW
+CURRENT OUTPUT OR ISSUE:
+[PASTE HERE]
 
-### PHASE 1: BRAND ENHANCEMENT
-1. Analisis nama brand dan aset visual. Jika gambar tidak dapat diakses, lanjutkan dengan deskripsi teks.
-2. Tajamkan: posisi pasar, USP yang tidak bisa diklaim brand lain, target pasar dengan kedalaman psikografis nyata.
-3. **Guardrail Inferensi Brand:**
-Inferensi industri dan konteks produk secara mandiri dari nama brand/produk.
-Jika nama mengandung deskripsi produk (contoh: "Cimol Kering") atau merupakan brand yang dikenal secara luas → langsung eksekusi tanpa konfirmasi.
-Jika nama sepenuhnya opaque — tidak mengandung petunjuk produk, kategori, maupun domain yang bisa di-resolve → nyatakan asumsi industri Anda secara eksplisit di baris pertama Phase 1 sebelum melanjutkan. Jangan berhenti untuk bertanya kecuali ambiguitasnya benar-benar akan menghasilkan brief yang bertolak belakang antar kemungkinan interpretasi.
+Untuk setiap iterasi:
+- What changes
+- Why it may improve performance
+- What stays locked
+- New hook
+- New visual direction
+- Risk` },
+        { label:'CTA & Offer Fix', prompt:`Perbaiki logika CTA dan offer.
 
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
-### PHASE 2: DIRECTOR'S CONCEPTUALIZATION
+Temukan:
+- strongest conversion action
+- best offer framing
+- soft CTA
+- hard CTA
+- social CTA
+- retargeting CTA
 
-**Aturan jumlah output:**
-- **1 Director Card** → Buat 3 konsep dengan angle strategis yang berbeda satu sama lain.
-  Tentukan sendiri angle terbaik berdasarkan: industri produk, USP yang sudah dibangun
-  di Phase 1, dan psikografi target audiens. Setiap angle harus menjawab satu
-  pertanyaan berbeda dalam benak audiens — jangan tumpang tindih secara emosional
-  maupun fungsional. Sebutkan nama angle yang Anda pilih dan alasan strategisnya
-  dalam satu kalimat sebelum brief dimulai.
+Output 12 CTA options grouped by intent.` },
+        { label:'Final Creative Review', prompt:`Review campaign ini sebelum production.
 
-- **Lebih dari 1 Director Card** → 1 konsep unggulan per sutradara. Angle dipilih
-  berdasarkan kesesuaian antara gaya sutradara dan momen psikologis yang paling
-  dieksploitasi untuk produk ini. Sebutkan angle dan alasan pemilihannya.
+INPUT DATA:
+${_brandProduct || '(Belum ada structured data yang diisi)'}
 
-**Guardrail:** Jika Director Card berisi nama tidak dikenal tanpa deskripsi tambahan → inferensi gaya berdasarkan nama, nyatakan asumsi secara eksplisit, dan lanjutkan. Berhenti hanya jika nama sama sekali tidak mengandung petunjuk apapun untuk diinferensi.
+DIRECTOR CARD:
+${_dirPartAB}
 
----
+CONCEPT / PROMPT / OUTPUT:
+[PASTE HERE]
 
-## OUTPUT RULES (STRICT)
+Score 1-10:
+- Product clarity
+- Audience fit
+- Hook strength
+- Visual distinctiveness
+- Director fit
+- Commercial usefulness
+- Production feasibility
 
-- **DILARANG:** Sapaan, pembukaan, konfirmasi, atau penutup dalam bentuk apapun.
-- **WAJIB:** Ikuti format sesuai OUTPUT MODE yang dipilih klien.
-- **BAHASA:** Tajam, profesional, eksekutable. Nol frasa bersayap.
-- **PANJANG FIELD (hanya berlaku untuk FULL mode):**
-  - Eksekusi Visual, Pacing, Transition: minimum 3 kalimat, maksimum 6 kalimat.
-  - Core Message: tepat 1 kalimat.
-  - CTA: 1 kalimat per CTA, tanpa elaborasi.
-
----
-
-## OUTPUT FORMAT
-
-### [PHASE 1: BRAND ENHANCEMENT]
-
-**Brand/Product Name:** [Nama original] — *"[Tagline/Enhancement Komersial]"*
-**Predicted Industry & Positioning:** [Industri spesifik] — [Premium / Mass-Market / Niche / Challenger Brand]
-**Enhanced USP:** [Punchline pembeda konkret — tidak bisa diklaim brand lain di industri sama]
-**Core Target Market:**
-- *Demografi:* [Rentang usia — Kelas ekonomi — Gender/Pekerjaan spesifik]
-- *Psikografi:* [Satu tension utama atau desire yang produk ini selesaikan — ditulis dari sudut pandang audiens]
-
----
-
-### [PHASE 2: DIRECTOR BRIEFS]
-
----
-
-#### FULL MODE (default)
-
-**[N]. Director: [Nama / Label] — Concept: [Nama Angle Strategis]**
-*Mode Sinematik: [2–4 kata merangkum vibe]*
-
-- **Tujuan Kampanye:** [Awareness / Conversion / Re-branding / Retention + sub-objektif jika relevan]
-- **Core Message & Copy:** "[Satu kalimat — mencerminkan gaya sutradara DAN USP produk secara bersamaan]"
-- **Format Konten:** [Platform + durasi — contoh: 15s Instagram Reels, 60s YouTube Pre-Roll]
-- **Eksekusi Visual (Art Direction):** [3 detik pertama: apa yang penonton lihat? Lanjutkan dengan arc visual keseluruhan — jenis shot, gerakan kamera, pencahayaan, color grade, satu elemen signature yang mengikat brand dengan gaya sutradara]
-- **Pacing & Tone of Voice:** [Tempo editing dengan analogi konkret jika membantu. Karakter VO jika ada. Musik: genre/instrumen/BPM rough estimate]
-- **Transition Style:** [Nama atau deskripsi teknik transisi spesifik — bukan "cut biasa"]
-- **Call to Action:**
-  - *Primary CTA:* [Imperatif yang terhubung narasi — bukan template generik]
-  - *Secondary CTA:* [Hook interaksi atau CTA re-targeting]
-
----
-
-#### COMPACT MODE (aktif jika klien memilih OUTPUT MODE: COMPACT)
-
-**[N]. [Nama Director] — [Angle] (Mode: [Vibe])**
-
-\`\`\`
-Brand        : 
-Industri     : 
-Produk       : 
-USP          : 
-Target       : 
-Tujuan Iklan : 
-Pesan Utama  : [Satu kalimat punchline]
-Format       : 
-Gaya Visual  : [Camera, Motion, Lighting, Color — sesuai Director Card]
-Tone of Voice: [Story, Pacing, Character — sesuai Director Card]
-Transition   : 
-CTA Utama    : 
-CTA Sekunder : 
-\`\`\`
-
----
-
-## INPUT KLIEN
-
-\`\`\`
-Nama Brand/Produk: ${_brand} ${_namaProduk}
-\`\`\`
-  
-`},
-
-
+Lalu berikan final recommendation: approve, revise, atau reject.` },
       ];
-      // ================================================================
-      // END DATA
-      // ================================================================
 
       // Build 3-column grid
       const fc3 = document.createElement('div'); fc3.className='fc3-grid';
@@ -7940,12 +9462,69 @@ if (curDest === 'full') {
   // ── STORYBOARD ───────────────────────────────────────────────────────────
   else if (curDest==='storyboard') {
     const lbl=document.createElement('div'); lbl.className='sz-label'; lbl.textContent='Storyboard — Variables'; zone.appendChild(lbl);
+
+    // ── MULTI DIRECTOR SELECT ───────────────────────────────────────────
+    const mdWrap = document.createElement('div'); mdWrap.className='multi-dir-wrap';
+
+    const mdLabelRow = document.createElement('div'); mdLabelRow.className='multi-dir-label';
+    mdLabelRow.innerHTML = `Additional Directors <span class="multi-dir-hint">⌘/Ctrl + klik untuk pilih lebih dari 1</span>`;
+    mdWrap.appendChild(mdLabelRow);
+
+    const mdSel = document.createElement('select');
+    mdSel.className = 'multi-dir-select';
+    mdSel.multiple  = true;
+    mdSel.size      = Math.min(directors.length, 0);
+
+    directors.forEach((dir, idx) => {
+      const opt = document.createElement('option');
+      opt.value       = idx;
+      opt.textContent = `${dir.name} — M${dir.modeNum} · ${dir.mode}`;
+      if (tabState.storyboard.selectedDirectors.includes(idx)) opt.selected = true;
+      mdSel.appendChild(opt);
+    });
+
+    const mdTags = document.createElement('div'); mdTags.className='multi-dir-tags';
+
+    function renderStoryboardDirTags() {
+      mdTags.innerHTML = '';
+      tabState.storyboard.selectedDirectors.forEach(idx => {
+        if (!directors[idx]) return;
+        const tag = document.createElement('div'); tag.className='multi-dir-tag';
+        tag.innerHTML = `${directors[idx].name}<span class="multi-dir-tag-x" data-idx="${idx}">✕</span>`;
+        tag.querySelector('.multi-dir-tag-x').addEventListener('click', () => {
+          tabState.storyboard.selectedDirectors = tabState.storyboard.selectedDirectors.filter(i => i !== idx);
+          Array.from(mdSel.options).forEach(o => {
+            if (parseInt(o.value) === idx) o.selected = false;
+          });
+          renderStoryboardDirTags();
+          renderOutput();
+        });
+        mdTags.appendChild(tag);
+      });
+    }
+
+    mdSel.addEventListener('change', () => {
+      tabState.storyboard.selectedDirectors = Array.from(mdSel.selectedOptions).map(o => parseInt(o.value));
+      renderStoryboardDirTags();
+      renderOutput();
+    });
+
+    mdWrap.appendChild(mdSel);
+    mdWrap.appendChild(mdTags);
+    renderStoryboardDirTags();
+
+    const mdWrapOuter = document.createElement('div'); mdWrapOuter.style.marginBottom='10px';
+    mdWrapOuter.appendChild(mdWrap);
+    zone.appendChild(mdWrapOuter);
+    // ── END MULTI DIRECTOR SELECT ───────────────────────────────────────
+
     const si=document.createElement('textarea'); si.className='stextarea'; si.placeholder='Describe your storyline / narrative arc...'; si.value=tabState.storyboard.storyline;
     si.addEventListener('input',()=>{tabState.storyboard.storyline=si.value;renderOutput();});
     zone.appendChild(makeFieldWrap('Storyline (optional)',si));
-    const g=document.createElement('div'); g.className='sg c2'; g.style.marginTop='10px';
+    const g=document.createElement('div'); g.className='sg c3'; g.style.marginTop='10px';
     g.appendChild(makeFieldWrap('Durasi',       buildRadioGroup('storyboard','durasi',      ['15s','30s','60s'])));
     g.appendChild(makeFieldWrap('Aspect Ratio', buildRadioGroup('storyboard','aspectRatio', ['9:16','16:9'])));
+    g.appendChild(makeFieldWrap('Prompt',       buildRadioGroup('storyboard','promptMode',  ['classic','modular','meet'])));
     zone.appendChild(g);
   }
 
@@ -8525,6 +10104,165 @@ function delDir(){
   document.getElementById('delBtn').style.display='none';
   renderList();
 }
+
+/* ============================================================
+   CASE OS BRIDGE
+   ============================================================ */
+(function () {
+  const BRIDGE_KEY = 'sprintCaseOSBridge';
+
+  function getBridgePayload() {
+    try {
+      return JSON.parse(localStorage.getItem(BRIDGE_KEY) || 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  function setChoice(state, key, customKey, value, options) {
+    if (!value) return;
+    const match = options.find((option) => option.toLowerCase() === String(value).toLowerCase());
+    if (match) {
+      state[key] = match;
+      if (customKey) state[customKey] = '';
+    } else {
+      state[key] = 'Lainnya';
+      if (customKey) state[customKey] = value;
+    }
+  }
+
+  function mapCaseToSet(payload) {
+    if (!payload || !payload.case || typeof tabState === 'undefined') return false;
+    const item = payload.case;
+    const intake = item.intake || {};
+    const production = item.production || {};
+    const data = tabState.data;
+
+    data.brand = intake.client || '';
+    data.namaProduk = intake.product || '';
+    data.usp = intake.usp || '';
+    data.pesan = intake.message || '';
+    data.cta = intake.cta || '';
+    data.guidelines = intake.guidelines || '';
+
+    setChoice(data, 'industri', 'industriLainnya', intake.industry, [
+      'Makanan & Minuman (snack, minuman, restoran, kafe)',
+      'Kecantikan & Fashion (skincare, makeup, baju, aksesoris)',
+      'Produk Rumah Tangga (sabun, deterjen, harian)',
+      'Bisnis Digital (e-commerce, aplikasi, fintech)',
+      'Travel & Hospitality (hotel, wisata, penginapan)',
+      'Event & Wedding (konser, EO, WO, dekorasi)',
+      'Otomotif (mobil, motor, bengkel)',
+      'Properti & Konstruksi (rumah, apartemen)',
+      'Kesehatan (klinik, RS, apotek, suplemen)',
+      'Pendidikan (sekolah, kursus, kampus)',
+      'Jasa Profesional (logistik, hukum, desain)',
+    ]);
+
+    setChoice(data, 'targetAudiens', 'targetAudiensLainnya', intake.audience, [
+      'Pemburu promo (sensitif harga, suka diskon)',
+      'Pencari kualitas (mau bayar lebih untuk terbaik)',
+      'Butuh solusi (punya masalah, cari jawaban)',
+      'Anak muda / Gen Z (visual-driven)',
+      'Profesional sibuk (efisien, to the point)',
+      'bu rumah tangga (keluarga, praktis)',
+      'Pemilik usaha / UMKM (bisnis)',
+    ]);
+
+    setChoice(data, 'tujuan', 'tujuanLainnya', intake.objective, [
+      'Launch produk / layanan baru',
+      'Perkenalan brand',
+      'Promosi & penjualan',
+      'Campaign musiman / event',
+      'Demo & edukasi produk',
+      'Testimoni & bukti sosial',
+      'Eksperimen / test konten',
+      'Optimasi otomatis',
+    ]);
+
+    setChoice(data, 'bahasa', 'bahasaLainnya', intake.language || 'Indonesia', [
+      'Indonesia',
+      'Inggris',
+      'Mix (Indonesia + Inggris)',
+    ]);
+
+    setChoice(data, 'format', 'formatLainnya', production.route, [
+      'Belum ditentukan / bebas',
+      'UGC / creator style',
+      'Cinematic / brand film',
+      'Hard sell / promo',
+      'Launch produk / layanan baru',
+      'Perkenalan brand',
+      'Promosi & penjualan',
+      'Campaign musiman / event',
+      'Demo & edukasi produk',
+      'Testimoni & bukti sosial',
+      'Eksperimen / test konten',
+    ]);
+
+    setChoice(data, 'visual', 'visualLainnya', intake.visualStyle || production.route, [
+      'Natural (dokumenter, vlog, keseharian)',
+      'Dramatis (visual \'wah\', iklan TV)',
+      'Fantasi (imajinatif, surealis)',
+    ]);
+
+    setChoice(data, 'bicara', 'bicaraLainnya', intake.narrativeStyle, [
+      'Jelas (lugas, informatif, serius)',
+      'Santai (fun, ringan, bahasa teman)',
+      'Nyeleneh (unik, lucu, tidak biasa)',
+    ]);
+
+    setChoice(data, 'asset', 'assetLainnya', item.assets && item.assets.length ? item.assets.join(', ') : '', [
+      'Product',
+      'Talent',
+      'Logo',
+      'Product & Talent',
+      'Product & Logo',
+    ]);
+
+    if (payload.director && Array.isArray(directors)) {
+      const idx = directors.findIndex((director) => director.name === payload.director.name);
+      if (idx >= 0 && typeof selectDir === 'function') selectDir(idx);
+    }
+
+    if (typeof autofillToBrief === 'function') autofillToBrief();
+    if (typeof renderSceneZone === 'function') renderSceneZone();
+    if (typeof renderOutput === 'function') renderOutput();
+    return true;
+  }
+
+  function showBridgeToast(text) {
+    let el = document.getElementById('caseOsBridgeToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'caseOsBridgeToast';
+      el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:1000;background:#202124;color:#fff;padding:10px 14px;border-radius:999px;font-family:Google Sans,Arial,sans-serif;font-size:12px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,.25);';
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 1800);
+  }
+
+  function installBridgeButton() {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'caseOsBridgeBtn';
+    btn.textContent = 'Load Case OS';
+    btn.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:999;border:1px solid #dadce0;background:#fff;color:#202124;border-radius:999px;padding:10px 14px;font-family:Google Sans,Arial,sans-serif;font-size:12px;font-weight:800;box-shadow:0 14px 34px rgba(60,64,67,.18);cursor:pointer;';
+    btn.addEventListener('click', () => {
+      const ok = mapCaseToSet(getBridgePayload());
+      showBridgeToast(ok ? 'Case OS loaded into SET' : 'No Case OS payload found');
+    });
+    document.body.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installBridgeButton);
+  } else {
+    installBridgeButton();
+  }
+})();
 
 /* ── INIT ── */
 renderList();
